@@ -1,0 +1,1689 @@
+<title>AeroBird</title>
+<meta name="description" content="AeroBird forecasts wildlife-strike risk around airports by zone, week and phase of flight.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;800&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Martian+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@700;800;900&display=swap">
+
+<style>
+/* Layout: an aeronautical chart by day, a night-ops console after dusk, and a taxiway sign to land on. */
+:root {
+  color-scheme: light;
+  --paper:   #E7EAE3;
+  --paper-2: #D8DED3;
+  --ink:     #0B0E11;
+  --ink-2:   #46504A;
+  --ink-3:   #7A857D;
+  --rule:    #B5BEB1;
+  --magenta: #C0157A;
+  --radar-d: #0D7698;
+
+  --night:   #05080C;
+  --night-2: #0A1017;
+  --night-3: #111A24;
+  --n-ink:   #E5EBF1;
+  --n-ink-2: #8E9CAC;
+  --n-ink-3: #55626F;
+  --n-rule:  #1B2632;
+  --n-mag:   #FF3FA4;
+  --cyan:    #46D2F2;
+
+  --sign:     #F5C518;
+  --sign-ink: #0E0E0C;
+
+  --r0: #2B6A5E;
+  --r1: #3BB487;
+  --r2: #E7BF3B;
+  --r3: #F47D24;
+  --r4: #F0392C;
+  --rx: #5B6773;
+
+  --f-display: "Big Shoulders Display", "Big Shoulders", "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body:    "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --f-mono:    "Martian Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-serif:   "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+
+  --gutter: clamp(16px, 4.2vw, 60px);
+  --max: 1340px;
+  --nav-h: 64px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+::selection { background: var(--magenta); color: var(--paper); }
+a { color: inherit; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--magenta); outline-offset: 3px; }
+
+.wrap { max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
+.mono { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.lat { font-family: var(--f-serif); font-style: italic; font-weight: 500; }
+.eyebrow {
+  font-family: var(--f-mono); font-size: 11px; font-weight: 500;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px; margin: 0 0 22px;
+}
+.eyebrow::before { content: ""; width: 26px; height: 2px; background: currentColor; }
+
+/* ── Navigation + route progress ─────────────────────────────── */
+.nav {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50;
+  height: var(--nav-h);
+  background: color-mix(in srgb, var(--paper) 84%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  color: var(--ink);
+  transition: background .5s ease, color .5s ease;
+}
+body[data-nav="night"] .nav { background: color-mix(in srgb, var(--night) 80%, transparent); color: var(--n-ink); }
+body[data-nav="sign"]  .nav { background: color-mix(in srgb, var(--sign) 90%, transparent); color: var(--sign-ink); }
+.nav-in { height: 100%; display: flex; align-items: center; gap: 28px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand svg { width: 30px; height: 30px; flex: none; }
+.brand b { font-family: var(--f-display); font-weight: 900; font-size: 25px; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; }
+.nav-links { display: flex; gap: 22px; margin-left: auto; }
+.nav-links a { text-decoration: none; font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .78; }
+.nav-links a:hover { opacity: 1; }
+.btn-sign {
+  display: inline-flex; align-items: stretch; text-decoration: none; border: 0; cursor: pointer; padding: 0;
+  font-family: var(--f-display); font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
+  font-size: 17px; line-height: 1;
+}
+.btn-sign .a { background: var(--sign-ink); color: var(--sign); padding: 11px 12px; display: grid; place-items: center; }
+.btn-sign .b { background: var(--sign); color: var(--sign-ink); padding: 11px 14px; display: flex; align-items: center; gap: 8px; border: 2px solid var(--sign-ink); border-left: 0; }
+.btn-sign .b svg { width: 16px; height: 16px; transition: transform .25s ease; }
+.btn-sign:hover .b svg { transform: translateX(4px); }
+.btn-sign.big { font-size: 22px; }
+.btn-sign.big .a, .btn-sign.big .b { padding-block: 15px; }
+
+.route {
+  position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.route-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--magenta); }
+body[data-nav="night"] .route-fill { background: var(--n-mag); }
+body[data-nav="sign"] .route-fill { background: var(--sign-ink); }
+.route-plane { position: absolute; top: -7px; width: 16px; height: 16px; margin-left: -8px; color: var(--magenta); left: 0; }
+body[data-nav="night"] .route-plane { color: var(--n-mag); }
+body[data-nav="sign"] .route-plane { color: var(--sign-ink); }
+.route-fix {
+  position: absolute; top: 6px; transform: translateX(-50%);
+  font-family: var(--f-mono); font-size: 9px; letter-spacing: .1em; opacity: .55;
+  text-decoration: none; padding-top: 2px;
+}
+.route-fix::before { content: ""; position: absolute; left: 50%; top: -9px; width: 6px; height: 6px; margin-left: -3px; transform: rotate(45deg); border: 1.5px solid currentColor; background: inherit; }
+.route-fix.on { opacity: 1; }
+
+/* ── Hero ────────────────────────────────────────────────────── */
+.hero { position: relative; padding-block: clamp(56px, 9vw, 120px) clamp(40px, 6vw, 72px); overflow: hidden; isolation: isolate; }
+.hero-graticule {
+  position: absolute; inset: 0; z-index: -3; pointer-events: none;
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--ink) 7%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--ink) 7%, transparent) 1px, transparent 1px);
+  background-size: 96px 96px;
+  mask-image: radial-gradient(ellipse 80% 70% at 60% 40%, #000 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 60% 40%, #000 30%, transparent 85%);
+}
+#flock { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; pointer-events: none; }
+.hero-route { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+.hero-route .line { fill: none; stroke: var(--magenta); stroke-width: 2.4; stroke-dasharray: 2400; stroke-dashoffset: 2400; animation: draw 2.6s cubic-bezier(.6,0,.2,1) .5s forwards; }
+.hero-route .fix { fill: var(--paper); stroke: var(--magenta); stroke-width: 2; opacity: 0; animation: pop .4s ease forwards; }
+.hero-route .fixlbl { font-family: var(--f-mono); font-size: 13px; fill: var(--magenta); letter-spacing: .08em; opacity: 0; animation: pop .4s ease forwards; }
+.hero-route .ac { fill: var(--magenta); }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes pop { to { opacity: 1; } }
+
+.hero h1 {
+  font-family: var(--f-display); font-weight: 900; text-transform: uppercase;
+  font-size: clamp(4.1rem, 15.2vw, 15.5rem); line-height: .8; letter-spacing: -.005em;
+  margin: 0 0 clamp(26px, 4vw, 44px);
+}
+.hero h1 .ln { display: block; overflow: hidden; padding-bottom: .04em; }
+.hero h1 .ln > span { display: inline-block; animation: rise 1s cubic-bezier(.2,.8,.1,1) both; }
+.hero h1 .ln:nth-child(2) > span { animation-delay: .09s; }
+.hero h1 .ln:nth-child(3) > span { animation-delay: .18s; color: var(--magenta); }
+@keyframes rise { from { transform: translateY(102%) skewY(4deg); } to { transform: none; } }
+.hero-low { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(24px, 5vw, 80px); align-items: end; }
+.hero-lede { font-size: clamp(1.08rem, 1.7vw, 1.32rem); line-height: 1.5; max-width: 34ch; margin: 0; color: var(--ink); }
+.hero-lede em { font-style: normal; background: linear-gradient(transparent 62%, color-mix(in srgb, var(--sign) 80%, transparent) 62%); }
+.hero-cta { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center; justify-content: flex-end; }
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 10px; text-decoration: none;
+  font-family: var(--f-mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+  padding: 14px 18px; border: 1.5px solid currentColor;
+  transition: background .25s, color .25s;
+}
+.btn-ghost:hover { background: var(--ink); color: var(--paper); }
+.btn-ghost svg { width: 14px; height: 14px; animation: bob 1.8s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(3px); } }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 6px 26px; margin-top: clamp(30px, 5vw, 56px); padding-top: 16px; border-top: 1.5px solid var(--ink); color: var(--ink-2); }
+.hero-meta span b { color: var(--ink); font-weight: 600; }
+.readout { margin-left: auto; color: var(--magenta); font-variant-numeric: tabular-nums; }
+
+/* ── Ticker ──────────────────────────────────────────────────── */
+.ticker { background: var(--ink); color: var(--paper); overflow: hidden; border-block: 1px solid var(--ink); }
+.ticker-track { display: flex; width: max-content; animation: tick 60s linear infinite; }
+.ticker-track span { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; white-space: nowrap; padding: 13px 0; }
+.ticker-track span i { font-style: normal; color: var(--sign); padding-inline: 18px; }
+.ticker-track span b { font-weight: 500; color: var(--sign); }
+@keyframes tick { to { transform: translateX(-50%); } }
+
+/* ── 2,818 ft ────────────────────────────────────────────────── */
+.alt { padding-block: clamp(80px, 11vw, 160px); position: relative; }
+.alt-grid { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); gap: clamp(24px, 4vw, 64px); align-items: center; }
+.tape {
+  width: 92px; height: 340px; position: relative; overflow: hidden;
+  border: 1.5px solid var(--ink); background: var(--ink); color: var(--paper);
+}
+.tape-track { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
+.tape-track div { height: 12px; position: relative; }
+.tape-track div::before { content: ""; position: absolute; right: 0; top: 0; height: 1px; width: 12px; background: color-mix(in srgb, var(--paper) 55%, transparent); }
+.tape-track div.maj::before { width: 22px; background: var(--paper); }
+.tape-track div.maj span { position: absolute; left: 8px; top: -7px; font-family: var(--f-mono); font-size: 10px; }
+.tape-box {
+  position: absolute; left: -2px; right: -2px; top: 50%; height: 34px; margin-top: -17px;
+  background: var(--paper); color: var(--ink); border: 2px solid var(--ink);
+  display: grid; place-items: center;
+  font-family: var(--f-mono); font-weight: 600; font-size: 15px; font-variant-numeric: tabular-nums;
+  transition: background .3s, color .3s;
+}
+.tape-box.lock { background: var(--magenta); color: var(--paper); border-color: var(--magenta); }
+.tape-cap { position: absolute; top: 8px; left: 0; right: 0; text-align: center; font-family: var(--f-mono); font-size: 9px; letter-spacing: .12em; color: var(--sign); }
+.big-alt { font-family: var(--f-display); font-weight: 900; font-size: clamp(5rem, 16vw, 15rem); line-height: .78; letter-spacing: -.01em; }
+.big-alt small { display: block; font-size: .2em; letter-spacing: .14em; margin-top: .45em; color: var(--magenta); }
+.alt-copy p { margin: 0 0 16px; max-width: 40ch; }
+.alt-copy p:first-child { font-size: 1.25rem; line-height: 1.45; }
+.alt-copy .src { color: var(--ink-3); }
+
+/* ── Failures ────────────────────────────────────────────────── */
+.fail { background: var(--paper-2); padding-block: clamp(72px, 9vw, 130px); }
+.sec-h { font-family: var(--f-display); font-weight: 800; text-transform: uppercase; line-height: .9; font-size: clamp(2.7rem, 7vw, 6rem); margin: 0 0 clamp(36px, 5vw, 60px); max-width: 15ch; text-wrap: balance; }
+.fail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 1.5px solid var(--ink); }
+.fail-item { padding: 28px clamp(16px, 2.4vw, 32px) 8px 0; }
+.fail-item + .fail-item { border-left: 1px solid var(--rule); padding-left: clamp(16px, 2.4vw, 32px); }
+.fail-item svg { width: 100%; max-width: 260px; height: auto; display: block; margin-bottom: 22px; overflow: visible; }
+.fail-item h3 { font-family: var(--f-display); font-weight: 800; font-size: 1.85rem; text-transform: uppercase; margin: 0 0 10px; line-height: 1; }
+.fail-item p { margin: 0; color: var(--ink-2); max-width: 36ch; }
+
+.pulse { animation: pulse 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse { 50% { transform: scale(1.35); opacity: .45; } }
+.blink { animation: blink 2s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .15; } }
+.drift { animation: drift 5s linear infinite; }
+@keyframes drift { from { transform: translate(-30px, 18px); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } to { transform: translate(60px, -40px); opacity: 0; } }
+.spin { animation: spin 5s linear infinite; transform-box: view-box; transform-origin: 130px 92px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Method / layers ─────────────────────────────────────────── */
+.method { padding-block: clamp(80px, 10vw, 150px); }
+.method-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(30px, 5vw, 90px); align-items: center; }
+.layers { list-style: none; margin: 0; padding: 0; border-top: 1.5px solid var(--ink); }
+.layer-item { display: grid; grid-template-columns: 60px minmax(0,1fr); gap: 4px 18px; padding: 20px 0; border-bottom: 1px solid var(--rule); cursor: default; transition: background .3s; }
+.layer-item .k { font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); padding-top: 6px; letter-spacing: .08em; }
+.layer-item h3 { font-family: var(--f-display); font-weight: 800; font-size: 1.7rem; text-transform: uppercase; margin: 0; line-height: 1.05; display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+.layer-item h3 small { font-family: var(--f-mono); font-size: 10px; font-weight: 500; letter-spacing: .1em; color: var(--ink-3); }
+.layer-item p { grid-column: 2; margin: 2px 0 0; color: var(--ink-2); max-width: 46ch; }
+.layer-item:hover, .layer-item.on { background: linear-gradient(90deg, color-mix(in srgb, var(--sign) 38%, transparent), transparent 70%); }
+.layer-item:hover .k, .layer-item.on .k { color: var(--magenta); }
+
+.stack { perspective: 1500px; perspective-origin: 50% 0%; height: 560px; display: grid; place-items: center; --spread: 58px; }
+.stack-in { position: relative; width: 270px; height: 270px; transform-style: preserve-3d; transform: translateY(70px); }
+.plane {
+  position: absolute; inset: 0;
+  transform: rotateX(60deg) rotateZ(-42deg) translateZ(calc(var(--i) * var(--spread)));
+  transition: transform .6s cubic-bezier(.2,.8,.2,1), box-shadow .4s, border-color .4s;
+  background: color-mix(in srgb, var(--paper) 86%, transparent);
+  border: 1.5px solid var(--ink);
+  box-shadow: 0 30px 50px -30px color-mix(in srgb, var(--ink) 50%, transparent);
+}
+.plane svg { width: 100%; height: 100%; display: block; }
+.plane .tag { position: absolute; left: 8px; bottom: 6px; font-family: var(--f-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.plane.top { background: color-mix(in srgb, var(--night) 92%, transparent); border-color: var(--night); }
+.plane.top .tag { color: var(--sign); }
+.stack[data-on="0"] .plane[data-l="0"],
+.stack[data-on="1"] .plane[data-l="1"],
+.stack[data-on="2"] .plane[data-l="2"],
+.stack[data-on="3"] .plane[data-l="3"] {
+  transform: rotateX(60deg) rotateZ(-42deg) translateZ(calc(var(--i) * var(--spread) + 34px));
+  border-color: var(--magenta); box-shadow: 0 0 0 3px color-mix(in srgb, var(--magenta) 30%, transparent), 0 40px 60px -30px color-mix(in srgb, var(--ink) 60%, transparent);
+}
+
+/* ── Equation ────────────────────────────────────────────────── */
+.eq { background: var(--ink); color: var(--paper); padding-block: clamp(80px, 10vw, 150px); position: relative; overflow: hidden; }
+.eq .eyebrow { color: var(--sign); }
+.formula {
+  font-family: var(--f-display); font-weight: 900; text-transform: uppercase;
+  font-size: clamp(2.5rem, 9.4vw, 9rem); line-height: .9; margin: 0 0 clamp(40px, 5vw, 64px);
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .22em;
+}
+.formula .op { color: color-mix(in srgb, var(--paper) 45%, transparent); font-weight: 700; }
+.formula .sym { font-family: var(--f-serif); font-style: italic; font-weight: 500; text-transform: none; font-size: 1.04em; color: var(--sign); }
+.formula .t { position: relative; cursor: default; transition: color .3s; }
+.formula .t::after { content: ""; position: absolute; left: 0; right: 0; bottom: -.06em; height: .06em; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform .7s cubic-bezier(.7,0,.2,1); }
+.eq.in .formula .t::after { transform: scaleX(1); }
+.formula .t.e { color: var(--n-mag); }
+.terms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 44px); border-top: 1px solid color-mix(in srgb, var(--paper) 25%, transparent); padding-top: 26px; }
+.term h3 { font-family: var(--f-display); font-weight: 800; font-size: 1.9rem; text-transform: uppercase; margin: 0 0 4px; line-height: 1; }
+.term .u { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; color: var(--sign); display: block; margin-bottom: 12px; }
+.term p { margin: 0; color: color-mix(in srgb, var(--paper) 74%, transparent); max-width: 38ch; font-size: 16px; }
+.term.e h3 { color: var(--n-mag); }
+.unitline { margin-top: clamp(40px, 5vw, 64px); display: flex; flex-wrap: wrap; gap: 12px 30px; align-items: baseline; }
+.unitline b { font-family: var(--f-display); font-weight: 800; font-size: clamp(1.7rem, 3.4vw, 2.8rem); text-transform: uppercase; line-height: 1; }
+.unitline span { color: color-mix(in srgb, var(--paper) 70%, transparent); max-width: 52ch; }
+
+/* ── Dusk ────────────────────────────────────────────────────── */
+.dusk {
+  position: relative; overflow: hidden;
+  background: linear-gradient(to bottom, var(--paper) 0%, #C9C7B9 16%, #B98F73 34%, #6A4560 52%, #1D1A33 72%, var(--night) 100%);
+  padding-block: clamp(140px, 20vw, 260px) clamp(90px, 12vw, 160px);
+  color: var(--n-ink);
+}
+.stars { position: absolute; inset: 40% 0 0 0; pointer-events: none; }
+.stars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: var(--n-ink); animation: twinkle 3s ease-in-out infinite; }
+@keyframes twinkle { 50% { opacity: .15; } }
+.horizon { position: absolute; left: 0; right: 0; top: 55%; height: 1px; background: color-mix(in srgb, var(--n-ink) 30%, transparent); }
+.dusk h2 { font-family: var(--f-display); font-weight: 900; text-transform: uppercase; font-size: clamp(3rem, 10vw, 9.5rem); line-height: .82; margin: 0; max-width: 11ch; position: relative; }
+.dusk h2 em { font-family: var(--f-serif); font-style: italic; font-weight: 500; text-transform: none; color: var(--cyan); letter-spacing: -.01em; }
+.dusk p { position: relative; max-width: 46ch; color: var(--n-ink-2); margin: 28px 0 0; font-size: 1.1rem; }
+.migrants { position: absolute; inset: 0; pointer-events: none; }
+.migrants span { position: absolute; width: 7px; height: 4px; color: var(--n-ink); animation: migrate linear infinite; }
+.migrants span svg { width: 100%; height: 100%; display: block; }
+@keyframes migrate { from { transform: translate(0, 0); } to { transform: translate(110vw, -38vh); } }
+
+/* ── Demo console ────────────────────────────────────────────── */
+.demo { background: var(--night); color: var(--n-ink); padding-block: clamp(30px, 5vw, 70px) clamp(80px, 10vw, 140px); }
+.demo-head { display: flex; flex-wrap: wrap; gap: 18px 40px; align-items: end; justify-content: space-between; margin-bottom: clamp(26px, 3vw, 40px); }
+.demo-head h2 { font-family: var(--f-display); font-weight: 900; text-transform: uppercase; font-size: clamp(2.6rem, 6.5vw, 5.6rem); line-height: .86; margin: 0; }
+.demo-head p { margin: 0; color: var(--n-ink-2); max-width: 44ch; }
+.demo-more { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 16px 30px; align-items: center; justify-content: space-between; border-top: 1px solid var(--n-rule); padding-top: 22px; }
+.demo-more p { margin: 0; color: var(--n-ink-2); max-width: 62ch; }
+.proto-tag { display: inline-flex; gap: 8px; align-items: center; font-family: var(--f-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--sign); border: 1px solid color-mix(in srgb, var(--sign) 55%, transparent); padding: 6px 9px; }
+.proto-tag::before { content: ""; width: 6px; height: 6px; background: var(--sign); animation: blink 1.6s steps(2) infinite; }
+
+.console { border: 1px solid var(--n-rule); background: var(--night-2); position: relative; }
+.c-top { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 16px 32px; padding: 20px 22px; border-bottom: 1px solid var(--n-rule); align-items: center; }
+.icao { font-family: var(--f-display); font-weight: 900; font-size: clamp(2.6rem, 5vw, 3.8rem); line-height: .8; letter-spacing: .01em; }
+.icao small { display: block; font-family: var(--f-mono); font-weight: 500; font-size: 10px; letter-spacing: .14em; color: var(--n-ink-2); margin-top: 10px; }
+.c-top-mid { min-width: 0; }
+.c-top-mid .nm { font-family: var(--f-display); font-weight: 700; font-size: 1.35rem; text-transform: uppercase; letter-spacing: .02em; }
+.c-top-mid .facts { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--n-ink-2); margin-top: 4px; }
+.metar { font-family: var(--f-mono); font-size: 11px; color: var(--cyan); margin-top: 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.metar b { color: var(--n-ink-3); font-weight: 500; }
+
+.c-ctrl { display: flex; flex-wrap: wrap; gap: 12px 22px; padding: 14px 22px; border-bottom: 1px solid var(--n-rule); align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--n-rule); background: var(--night); }
+.seg button {
+  border: 0; background: transparent; cursor: pointer; padding: 9px 13px;
+  font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--n-ink-2);
+  transition: color .2s, background .2s;
+}
+.seg button + button { border-left: 1px solid var(--n-rule); }
+.seg button:hover { color: var(--n-ink); }
+.seg button[aria-pressed="true"] { background: var(--n-ink); color: var(--night); }
+.seg.mag button[aria-pressed="true"] { background: var(--n-mag); color: var(--night); }
+.ctl-lbl { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .14em; color: var(--n-ink-3); text-transform: uppercase; margin-right: 8px; }
+.ctl { display: flex; align-items: center; }
+.chk { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--n-ink-2); }
+.chk input { appearance: none; width: 16px; height: 16px; border: 1px solid var(--n-ink-3); margin: 0; display: grid; place-items: center; cursor: pointer; }
+.chk input:checked { background: var(--sign); border-color: var(--sign); }
+.chk input:checked::after { content: ""; width: 7px; height: 4px; border: 2px solid var(--night); border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); }
+
+.c-main { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr); }
+.c-map { position: relative; border-right: 1px solid var(--n-rule); padding: 14px; min-width: 0; }
+#chart { width: 100%; height: auto; aspect-ratio: 1 / 1; display: block; max-width: 100%; touch-action: manipulation; }
+#chart .ring { cursor: pointer; transition: fill .45s ease, fill-opacity .3s ease; }
+#chart .ring:hover { fill-opacity: .62; }
+#chart .ring:focus-visible { outline: none; stroke: var(--sign); stroke-width: 2; }
+#chart .flow { fill: none; stroke: var(--n-mag); stroke-dasharray: 6 7; animation: flow 1s linear infinite; transition: opacity .4s; }
+@keyframes flow { to { stroke-dashoffset: -26; } }
+#chart .lbl { font-family: var(--f-mono); fill: var(--n-ink-2); letter-spacing: .06em; pointer-events: none; }
+#chart .lbl.hi { fill: var(--n-ink); }
+#chart .lbl.mag { fill: var(--n-mag); }
+#chart .lbl.cy { fill: var(--cyan); }
+#chart .dot { transition: opacity .5s ease; pointer-events: none; }
+#chart .sel-ring { fill: none; stroke: var(--n-ink); stroke-dasharray: 3 5; animation: flow 1.6s linear infinite; pointer-events: none; transition: d .5s; }
+.map-foot { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; padding-top: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.legend span { display: inline-flex; gap: 6px; align-items: center; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .06em; color: var(--n-ink-2); text-transform: uppercase; }
+.legend i { width: 14px; height: 10px; display: inline-block; }
+.legend i.x { background: repeating-linear-gradient(45deg, var(--rx) 0 2px, transparent 2px 5px); border: 1px solid var(--rx); }
+.legend .unit { color: var(--n-ink-3); }
+.disclaim { font-family: var(--f-mono); font-size: 9px; letter-spacing: .08em; color: var(--n-ink-3); text-transform: uppercase; }
+
+.c-panel { padding: 22px; min-width: 0; display: flex; flex-direction: column; gap: 22px; }
+.p-head { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.p-zone { font-family: var(--f-display); font-weight: 800; font-size: 1.6rem; text-transform: uppercase; margin-right: auto; line-height: 1; }
+.chip { font-family: var(--f-mono); font-size: 10px; letter-spacing: .1em; padding: 5px 8px; text-transform: uppercase; font-weight: 600; }
+.chip.band { color: var(--night); }
+.chip.grade { border: 1px solid var(--n-ink-3); color: var(--n-ink); }
+.p-num { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.p-num .v { font-family: var(--f-display); font-weight: 900; font-size: clamp(4.4rem, 8vw, 6.4rem); line-height: .8; font-variant-numeric: tabular-nums; transition: color .4s; }
+.p-num .u { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em; color: var(--n-ink-2); max-width: 17ch; line-height: 1.5; text-transform: uppercase; }
+.p-num.unknown .v { font-size: clamp(2.4rem, 4.6vw, 3.4rem); color: var(--n-ink-2); background: repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--rx) 40%, transparent) 6px 8px); padding: 8px 10px 4px; }
+.ci { margin-top: 2px; }
+.ci-axis { position: relative; height: 26px; }
+.ci-bands { position: absolute; left: 0; right: 0; top: 10px; height: 6px; display: flex; }
+.ci-bands i { flex: 1; opacity: .35; }
+.ci-range { position: absolute; top: 6px; height: 14px; border: 1.5px solid var(--n-ink); transition: left .45s ease, width .45s ease; }
+.ci-pt { position: absolute; top: 2px; width: 2px; height: 22px; background: var(--n-ink); margin-left: -1px; transition: left .45s ease; }
+.ci-ticks { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 9px; color: var(--n-ink-3); margin-top: 4px; }
+.ci-txt { font-family: var(--f-mono); font-size: 10.5px; color: var(--n-ink-2); margin-top: 6px; letter-spacing: .04em; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.split div { border-top: 1px solid var(--n-rule); padding-top: 8px; }
+.split .k { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .12em; color: var(--n-ink-3); text-transform: uppercase; }
+.split .n { font-family: var(--f-display); font-weight: 800; font-size: 1.7rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.split .bar { height: 3px; background: var(--n-rule); margin-top: 6px; }
+.split .bar i { display: block; height: 100%; background: var(--n-mag); transition: width .5s ease; }
+.p-sec h4 { font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--n-ink-3); margin: 0 0 10px; font-weight: 500; display: flex; justify-content: space-between; gap: 10px; }
+.p-sec h4 b { color: var(--n-ink-2); font-weight: 500; }
+.sp-list { list-style: none; margin: 0; padding: 0; }
+.sp { display: grid; grid-template-columns: minmax(0, 1fr) 46px 74px 58px; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--n-rule); }
+.sp-name b { display: block; font-weight: 600; font-size: 14px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-name i { display: block; font-family: var(--f-serif); font-style: italic; font-size: 14px; color: var(--n-ink-2); line-height: 1.15; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sp-name.radar b { color: var(--cyan); }
+.sp-mass { font-family: var(--f-mono); font-size: 10px; color: var(--n-ink-2); text-align: right; font-variant-numeric: tabular-nums; }
+.sp-share { font-family: var(--f-mono); font-size: 10px; font-variant-numeric: tabular-nums; }
+.sp-share .bar { display: block; height: 4px; background: var(--n-rule); margin-bottom: 4px; }
+.sp-share .bar i { display: block; height: 100%; background: var(--n-ink); width: 0; transition: width .6s cubic-bezier(.2,.8,.2,1); }
+.sp-spark { width: 58px; height: 22px; display: block; overflow: visible; }
+.driver { font-size: 14.5px; color: var(--n-ink-2); margin: 10px 0 0; line-height: 1.5; }
+.driver b { color: var(--n-ink); font-weight: 600; }
+#radarChart { width: 100%; height: auto; display: block; overflow: visible; }
+.ev { display: grid; gap: 7px; }
+.ev-row { display: grid; grid-template-columns: minmax(0, 1fr) 54px; gap: 10px; align-items: center; font-size: 13.5px; color: var(--n-ink-2); }
+.ev-row .bar { grid-column: 1 / -1; height: 3px; background: var(--n-rule); }
+.ev-row .bar i { display: block; height: 100%; transition: width .5s ease; }
+.ev-row .n { font-family: var(--f-mono); font-size: 11px; text-align: right; color: var(--n-ink); font-variant-numeric: tabular-nums; }
+.ev-note { font-size: 13.5px; color: var(--n-ink-2); margin: 4px 0 0; }
+.ev-note b { color: var(--sign); font-weight: 600; }
+
+.c-time { border-top: 1px solid var(--n-rule); padding: 16px 22px 20px; }
+.t-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.play {
+  width: 46px; height: 46px; border-radius: 50%; border: 1.5px solid var(--n-ink); background: transparent; cursor: pointer;
+  display: grid; place-items: center; flex: none; transition: background .2s, color .2s;
+}
+.play:hover { background: var(--n-ink); color: var(--night); }
+.play svg { width: 16px; height: 16px; }
+.t-week { font-family: var(--f-display); font-weight: 800; font-size: 2rem; line-height: .9; min-width: 4.5ch; font-variant-numeric: tabular-nums; }
+.t-dates { font-family: var(--f-mono); font-size: 10.5px; color: var(--n-ink-2); letter-spacing: .06em; text-transform: uppercase; }
+.t-season { margin-left: auto; font-family: var(--f-mono); font-size: 10.5px; color: var(--sign); letter-spacing: .08em; text-transform: uppercase; }
+.cal-wrap { overflow-x: auto; margin-top: 16px; padding-bottom: 4px; }
+.cal { display: grid; grid-template-columns: 74px repeat(52, minmax(11px, 1fr)); gap: 2px; min-width: 700px; position: relative; }
+.cal .mo { font-family: var(--f-mono); font-size: 9px; color: var(--n-ink-3); letter-spacing: .08em; text-transform: uppercase; height: 16px; white-space: nowrap; }
+.cal .rl { font-family: var(--f-mono); font-size: 9.5px; color: var(--n-ink-2); letter-spacing: .04em; display: flex; align-items: center; white-space: nowrap; cursor: pointer; }
+.cal .rl.on { color: var(--n-ink); }
+.cal .rl.on::before { content: ""; width: 6px; height: 6px; background: var(--n-mag); margin-right: 6px; }
+.cal .c { height: 22px; border: 0; padding: 0; cursor: pointer; transition: background-color .4s ease, transform .2s; }
+.cal .c:hover { transform: scaleY(1.25); }
+.cal .c.x { background: repeating-linear-gradient(45deg, var(--rx) 0 2px, transparent 2px 4px) !important; }
+.cal .c.wk { box-shadow: inset 0 -3px 0 var(--n-mag); }
+.cal .c.sel { outline: 2px solid var(--n-ink); outline-offset: 1px; position: relative; z-index: 1; }
+#week { width: 100%; margin: 14px 0 0; accent-color: var(--n-mag); }
+
+/* ── Principles ──────────────────────────────────────────────── */
+.princ { background: var(--night); color: var(--n-ink); padding-block: clamp(40px, 6vw, 80px) clamp(90px, 12vw, 170px); overflow: hidden; }
+.pr { border-top: 1px solid var(--n-rule); padding-block: clamp(26px, 3.6vw, 46px); display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px 30px; align-items: baseline; }
+.pr .k { font-family: var(--f-mono); font-size: 10.5px; color: var(--n-ink-3); letter-spacing: .12em; text-transform: uppercase; }
+.pr h3 { font-family: var(--f-display); font-weight: 900; text-transform: uppercase; font-size: clamp(2.4rem, 7.2vw, 7rem); line-height: .86; margin: 0; will-change: transform; }
+.pr h3 em { font-style: normal; color: var(--sign); }
+.pr p { grid-column: 2; margin: 6px 0 0; color: var(--n-ink-2); max-width: 54ch; }
+
+/* ── Waitlist ────────────────────────────────────────────────── */
+.wl { background: var(--sign); color: var(--sign-ink); padding-block: clamp(80px, 10vw, 140px); position: relative; overflow: hidden; }
+.wl::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background: repeating-linear-gradient(-45deg, transparent 0 22px, color-mix(in srgb, var(--sign-ink) 6%, transparent) 22px 24px);
+}
+.wl-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(30px, 6vw, 100px); align-items: start; }
+.signpair { display: inline-flex; margin-bottom: 30px; font-family: var(--f-display); font-weight: 900; font-size: clamp(1.4rem, 2.4vw, 1.9rem); line-height: 1; text-transform: uppercase; }
+.signpair span { padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+.signpair .loc { background: var(--sign-ink); color: var(--sign); border: 3px solid var(--sign); outline: 3px solid var(--sign-ink); }
+.signpair .dir { border: 3px solid var(--sign-ink); border-left: 0; }
+.signpair .dir svg { width: 22px; height: 22px; animation: nudge 1.4s ease-in-out infinite; }
+@keyframes nudge { 50% { transform: translateX(5px); } }
+.wl h2 { font-family: var(--f-display); font-weight: 900; text-transform: uppercase; font-size: clamp(3.6rem, 11vw, 10rem); line-height: .8; margin: 0 0 24px; }
+.wl-copy p { font-size: 1.15rem; max-width: 36ch; margin: 0 0 14px; }
+.wl-copy ul { list-style: none; padding: 0; margin: 28px 0 0; border-top: 2px solid var(--sign-ink); }
+.wl-copy li { padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--sign-ink) 30%, transparent); display: grid; grid-template-columns: 34px minmax(0,1fr); gap: 10px; font-weight: 500; }
+.wl-copy li span { font-family: var(--f-mono); font-size: 11px; padding-top: 3px; }
+
+form.wl-form { background: var(--sign-ink); color: var(--sign); padding: clamp(22px, 3vw, 36px); display: grid; gap: 16px; position: relative; }
+.f { display: grid; gap: 6px; }
+.f label { font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+.f input, .f select {
+  width: 100%; background: transparent; border: 0; border-bottom: 1.5px solid color-mix(in srgb, var(--sign) 45%, transparent);
+  padding: 10px 0; color: var(--paper); font-size: 1.05rem; border-radius: 0; outline: none; transition: border-color .2s;
+}
+.f select option { color: var(--ink); }
+.f input::placeholder { color: color-mix(in srgb, var(--paper) 35%, transparent); }
+.f input:focus, .f select:focus { border-color: var(--sign); }
+.f-row { display: grid; grid-template-columns: minmax(0, 1fr) 130px; gap: 18px; }
+.f-err { font-family: var(--f-mono); font-size: 10.5px; color: var(--r3); min-height: 1em; letter-spacing: .04em; }
+.submit {
+  margin-top: 6px; border: 0; cursor: pointer; background: var(--sign); color: var(--sign-ink);
+  font-family: var(--f-display); font-weight: 900; font-size: 1.5rem; text-transform: uppercase; letter-spacing: .04em;
+  padding: 16px 18px; display: flex; justify-content: space-between; align-items: center;
+  transition: transform .15s ease;
+}
+.submit:hover { transform: translateY(-2px); }
+.submit:active { transform: translateY(1px); }
+.submit svg { width: 22px; height: 22px; }
+.f-note { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .06em; color: color-mix(in srgb, var(--sign) 60%, transparent); margin: 0; }
+.clear { font-family: var(--f-mono); font-size: 13px; line-height: 1.9; color: var(--sign); white-space: pre-wrap; min-height: 260px; }
+.clear::after { content: "▋"; animation: blink 1s steps(2) infinite; }
+
+footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; }
+.ft { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px 60px; align-items: start; }
+.ft .brand b { font-size: 30px; }
+.ft-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; font-size: 14px; color: color-mix(in srgb, var(--paper) 66%, transparent); }
+.ft-cols h4 { font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--sign); margin: 0 0 8px; font-weight: 500; }
+.ft-cols p { margin: 0; }
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 1060px) {
+  .c-main { grid-template-columns: minmax(0, 1fr); }
+  .c-map { border-right: 0; border-bottom: 1px solid var(--n-rule); }
+  .method-grid { grid-template-columns: minmax(0, 1fr); }
+  .stack { height: 470px; order: -1; }
+}
+@media (max-width: 860px) {
+  .nav-links { display: none; }
+  .hero-low, .alt-grid, .wl-grid { grid-template-columns: minmax(0, 1fr); }
+  .hero-cta { justify-content: flex-start; }
+  .tape { display: none; }
+  .fail-grid, .terms, .ft-cols { grid-template-columns: minmax(0, 1fr); }
+  .fail-item + .fail-item { border-left: 0; padding-left: 0; border-top: 1px solid var(--rule); }
+  .c-top { grid-template-columns: minmax(0, 1fr); }
+  .pr { grid-template-columns: minmax(0, 1fr); }
+  .pr p { grid-column: 1; }
+  .ft { grid-template-columns: minmax(0, 1fr); }
+  .route-fix { display: none; }
+  .readout { display: none; }
+}
+@media (max-width: 520px) {
+  .nav .btn-sign .b span { display: none; }
+  .sp { grid-template-columns: minmax(0, 1fr) 42px 64px; }
+  .sp-spark { display: none; }
+  .f-row { grid-template-columns: minmax(0, 1fr); }
+  .stack { height: 400px; }
+  .stack-in { transform: translateY(50px) scale(.78); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
+  html { scroll-behavior: auto; }
+  .ticker-track { animation: none; }
+  .migrants { display: none; }
+}
+</style>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top" aria-label="AeroBird home">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="1.6" stroke-dasharray="64 24" transform="rotate(-30 16 16)"/>
+        <circle cx="16" cy="16" r="8.5" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+        <path d="M7 19.5 L14 14 L16.2 16.4 L18.4 14 L25.5 19.5" stroke="#C0157A" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <b>AeroBird</b>
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#method">Method</a>
+      <a href="#model">Model</a>
+      <a href="#demo">Demo</a>
+    </nav>
+    <a class="btn-sign" href="#waitlist">
+      <span class="a">AB</span>
+      <span class="b"><span>Join waitlist</span><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" stroke-width="2.2"/></svg></span>
+    </a>
+  </div>
+  <div class="route" id="route" aria-hidden="true">
+    <div class="route-fill" id="routeFill"></div>
+    <svg class="route-plane" id="routePlane" viewBox="0 0 16 16"><path d="M8 1.5 9.2 6.2 14.5 8.6V10L9.2 8.7 8.9 12.3 10.6 13.6V14.6L8 13.9 5.4 14.6V13.6L7.1 12.3 6.8 8.7 1.5 10V8.6L6.8 6.2Z" fill="currentColor" transform="rotate(90 8 8)"/></svg>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero" id="top" data-nav="paper">
+    <div class="hero-graticule"></div>
+    <canvas id="flock" aria-hidden="true"></canvas>
+    <svg class="hero-route" viewBox="0 0 1440 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <path id="heroPath" class="line" d="M -60 640 L 250 560 L 640 600 L 1010 380 L 1270 330 L 1520 180"/>
+      <g style="animation-delay:1.2s"><path class="fix" style="animation-delay:1.1s" d="M250 551 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:1.1s" x="264" y="548">TAKOF</text></g>
+      <path class="fix" style="animation-delay:1.5s" d="M640 591 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:1.5s" x="654" y="622">BIRDS</text>
+      <path class="fix" style="animation-delay:1.9s" d="M1010 371 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:1.9s" x="1024" y="368">SNAGV</text>
+      <path class="fix" style="animation-delay:2.2s" d="M1270 321 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:2.2s" x="1284" y="352">HOLDS</text>
+      <g class="ac">
+        <path d="M0 -9 L2.6 -2 L13 3 V6 L2.6 3.4 L2 10 L5.5 12.6 V14.4 L0 13 L-5.5 14.4 V12.6 L-2 10 L-2.6 3.4 L-13 6 V3 L-2.6 -2 Z" transform="rotate(90)"/>
+        <animateMotion id="acMotion" dur="16s" begin="2.4s" repeatCount="indefinite" rotate="auto" path="M -60 640 L 250 560 L 640 600 L 1010 380 L 1270 330 L 1520 180"/>
+      </g>
+    </svg>
+
+    <div class="wrap">
+      <p class="eyebrow">Wildlife strike intelligence · Prototype</p>
+      <h1 aria-label="Birds don't file flight plans.">
+        <span class="ln"><span>Birds don’t</span></span>
+        <span class="ln"><span>file flight</span></span>
+        <span class="ln"><span>plans.</span></span>
+      </h1>
+      <div class="hero-low">
+        <p class="hero-lede">AeroBird forecasts wildlife-strike risk around your airport <em>by ring, by week and by phase of flight</em>. It combines weather radar, survey-corrected bird records, strike history and your own airside logs.</p>
+        <div class="hero-cta">
+          <a class="btn-ghost" href="#demo">Fly the demo <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1v11M2.5 7.5 7 12l4.5-4.5" stroke="currentColor" stroke-width="1.8"/></svg></a>
+          <a class="btn-sign big" href="#waitlist"><span class="a">AB</span><span class="b">Join the waitlist <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" stroke-width="2.2"/></svg></span></a>
+        </div>
+      </div>
+      <div class="hero-meta mono">
+        <span><b>4</b> rings to 30 NM</span>
+        <span><b>52</b> weeks of climatology</span>
+        <span><b>3</b> phases of flight</span>
+        <span class="readout" id="readout">N44°34.27′ E026°05.11′</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="ticker" aria-label="Sample bird activity feed">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+
+  <!-- 2,818 FT -->
+  <section class="alt" data-nav="paper" id="alt">
+    <div class="wrap alt-grid">
+      <div class="tape" aria-hidden="true">
+        <div class="tape-track" id="tapeTrack"></div>
+        <div class="tape-cap">ALT FT</div>
+        <div class="tape-box" id="tapeBox">2818</div>
+      </div>
+      <div class="big-alt" aria-label="2,818 feet above ground level">2,818<small>Feet above ground</small></div>
+      <div class="alt-copy">
+        <p>15 January 2009. US Airways 1549 climbs out of LaGuardia and flies into a flock of Canada geese. Both engines stop. Less than four minutes later the aircraft is on the Hudson.</p>
+        <p>Strikes cluster where aircraft are low and close to the field: take-off, climb, approach and landing. That band is where AeroBird looks hardest.</p>
+        <p class="src mono">Altitude at impact per the NTSB accident report</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY CURRENT DATA FAILS -->
+  <section class="fail" data-nav="paper" id="problem">
+    <div class="wrap">
+      <p class="eyebrow">The problem with bird data today</p>
+      <h2 class="sec-h">Most bird maps count birdwatchers.</h2>
+      <div class="fail-grid">
+        <article class="fail-item">
+          <svg viewBox="0 0 260 150" aria-hidden="true">
+            <rect x="0" y="0" width="260" height="150" fill="none"/>
+            <g fill="#0B0E11">
+              <circle cx="60" cy="72" r="3"/><circle cx="68" cy="66" r="3"/><circle cx="54" cy="80" r="3"/><circle cx="72" cy="79" r="3"/><circle cx="62" cy="88" r="3"/><circle cx="49" cy="64" r="3"/><circle cx="78" cy="70" r="3"/><circle cx="66" cy="58" r="3"/><circle cx="58" cy="96" r="3"/><circle cx="82" cy="88" r="3"/>
+            </g>
+            <circle class="pulse" cx="65" cy="76" r="34" fill="none" stroke="#C0157A" stroke-width="1.5"/>
+            <circle cx="196" cy="76" r="3" fill="#0B0E11"/>
+            <circle cx="196" cy="76" r="34" fill="none" stroke="#7A857D" stroke-width="1.5" stroke-dasharray="3 4"/>
+            <text x="65" y="138" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#46504A">10 VISITS · 40 GULLS</text>
+            <text x="196" y="138" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#46504A">1 VISIT · 400 GULLS</text>
+          </svg>
+          <h3>Counts, not rates</h3>
+          <p>A reservoir with ten visiting birders looks busier than a field with one, whatever the birds are doing. Without dividing by survey effort, you are mapping people.</p>
+        </article>
+        <article class="fail-item">
+          <svg viewBox="0 0 260 150" aria-hidden="true">
+            <circle cx="130" cy="76" r="52" fill="none" stroke="#0B0E11" stroke-width="1.5" stroke-dasharray="2 5"/>
+            <rect x="96" y="70" width="68" height="5" fill="#0B0E11" transform="rotate(-8 130 72)"/>
+            <rect x="98" y="82" width="64" height="5" fill="#0B0E11" transform="rotate(-8 130 84)"/>
+            <g fill="#0B0E11">
+              <circle cx="38" cy="40" r="2.6"/><circle cx="30" cy="96" r="2.6"/><circle cx="214" cy="34" r="2.6"/><circle cx="228" cy="104" r="2.6"/><circle cx="60" cy="130" r="2.6"/><circle cx="200" cy="132" r="2.6"/><circle cx="20" cy="66" r="2.6"/><circle cx="240" cy="70" r="2.6"/>
+            </g>
+            <text class="blink" x="130" y="52" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#C0157A">NO RECORDS</text>
+            <text x="130" y="146" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#46504A">AIRSIDE FENCE</text>
+          </svg>
+          <h3>Airside is unsurveyed</h3>
+          <p>The ring that matters most sits behind a fence. Public records are thinnest exactly where aircraft are lowest.</p>
+        </article>
+        <article class="fail-item">
+          <svg viewBox="0 0 260 150" aria-hidden="true">
+            <path d="M46 34 a20 20 0 1 0 22 26 a16 16 0 1 1 -22 -26z" fill="#0B0E11"/>
+            <g fill="none" stroke="#0D7698" stroke-width="1.4">
+              <path d="M84 92 A 52 52 0 0 1 176 92"/><path d="M66 92 A 70 70 0 0 1 194 92"/><path d="M48 92 A 88 88 0 0 1 212 92"/>
+            </g>
+            <line class="spin" x1="130" y1="92" x2="130" y2="12" stroke="#0D7698" stroke-width="1.6"/>
+            <g class="drift" fill="#0B0E11"><path d="M120 70 l4 -3 l4 3"/><path d="M146 58 l4 -3 l4 3"/><path d="M104 54 l4 -3 l4 3"/><path d="M160 76 l4 -3 l4 3"/></g>
+            <g fill="none" stroke="#0B0E11" stroke-width="1.3" class="drift"><path d="M120 70 l4 -3 l4 3"/><path d="M146 58 l4 -3 l4 3"/><path d="M104 54 l4 -3 l4 3"/><path d="M160 76 l4 -3 l4 3"/></g>
+            <line x1="20" y1="92" x2="240" y2="92" stroke="#0B0E11" stroke-width="1.5"/>
+            <text x="130" y="122" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#46504A">CHECKLISTS AFTER DARK: FEW</text>
+          </svg>
+          <h3>Blind after dark</h3>
+          <p>Most songbird migration happens at night, hundreds of metres up. Daytime checklists never see it. Weather radar does.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- METHOD -->
+  <section class="method" id="method" data-nav="paper">
+    <div class="wrap method-grid">
+      <div>
+        <p class="eyebrow">Method</p>
+        <h2 class="sec-h">Four layers. One answer per ring.</h2>
+        <ol class="layers" id="layers">
+          <li class="layer-item" data-l="3">
+            <span class="k">L4</span>
+            <h3>Airside logs <small>Your wildlife team</small></h3>
+            <p>Daily patrol and dispersal records. The only data that properly covers the inner ring, and it stays yours.</p>
+          </li>
+          <li class="layer-item" data-l="2">
+            <span class="k">L3</span>
+            <h3>Species &amp; season <small>Survey-corrected</small></h3>
+            <p>Citizen-science records divided by survey hours, with genuine zeros from complete checklists, smoothed into week-by-week climatology.</p>
+          </li>
+          <li class="layer-item" data-l="1">
+            <span class="k">L2</span>
+            <h3>Weather radar <small>Altitude, day &amp; night</small></h3>
+            <p>European radar networks see migrating birds in 200 m height bins, around the clock. It fills in what checklists can’t see.</p>
+          </li>
+          <li class="layer-item" data-l="0">
+            <span class="k">L1</span>
+            <h3>Strike history <small>Ground truth</small></h3>
+            <p>Reported strikes with species, phase, altitude and damage. We fit severity to it, and we test every forecast against it.</p>
+          </li>
+        </ol>
+      </div>
+      <div class="stack" id="stack" aria-hidden="true">
+        <div class="stack-in">
+          <div class="plane" data-l="0" style="--i:0">
+            <svg viewBox="0 0 270 270" id="pl0"></svg><span class="tag">L1 · Strikes</span>
+          </div>
+          <div class="plane" data-l="1" style="--i:1">
+            <svg viewBox="0 0 270 270">
+              <g fill="none" stroke="#0D7698" stroke-width="1.3">
+                <circle cx="135" cy="135" r="30"/><circle cx="135" cy="135" r="60"/><circle cx="135" cy="135" r="90"/><circle cx="135" cy="135" r="120"/>
+              </g>
+              <path d="M135 135 L135 15 A120 120 0 0 1 220 50 Z" fill="#0D7698" opacity=".22"/>
+              <line x1="135" y1="135" x2="135" y2="15" stroke="#0D7698" stroke-width="2"/>
+            </svg><span class="tag">L2 · Radar</span>
+          </div>
+          <div class="plane" data-l="2" style="--i:2">
+            <svg viewBox="0 0 270 270" id="pl2"></svg><span class="tag">L3 · Species</span>
+          </div>
+          <div class="plane" data-l="3" style="--i:3">
+            <svg viewBox="0 0 270 270">
+              <circle cx="135" cy="135" r="62" fill="none" stroke="#0B0E11" stroke-width="1.2" stroke-dasharray="3 4"/>
+              <rect x="88" y="124" width="94" height="7" fill="#0B0E11" transform="rotate(-8 135 128)"/>
+              <rect x="90" y="142" width="90" height="7" fill="#0B0E11" transform="rotate(-8 135 145)"/>
+              <g fill="#F5C518" stroke="#0B0E11" stroke-width="1"><circle cx="110" cy="108" r="4"/><circle cx="160" cy="112" r="4"/><circle cx="150" cy="166" r="4"/><circle cx="118" cy="160" r="4"/><circle cx="176" cy="140" r="4"/><circle cx="96" cy="140" r="4"/><circle cx="138" cy="96" r="4"/></g>
+            </svg><span class="tag">L4 · Airside logs</span>
+          </div>
+          <div class="plane top" data-l="4" style="--i:4">
+            <svg viewBox="0 0 270 270">
+              <circle cx="135" cy="135" r="124" fill="#2B6A5E" opacity=".75"/>
+              <circle cx="135" cy="135" r="92" fill="#3BB487" opacity=".8"/>
+              <circle cx="135" cy="135" r="58" fill="#F47D24" opacity=".85"/>
+              <circle cx="135" cy="135" r="30" fill="#E7BF3B"/>
+              <g fill="none" stroke="#05080C" stroke-width="1"><circle cx="135" cy="135" r="124"/><circle cx="135" cy="135" r="92"/><circle cx="135" cy="135" r="58"/><circle cx="135" cy="135" r="30"/></g>
+              <line x1="0" y1="153" x2="270" y2="117" stroke="#FF3FA4" stroke-width="1.6" stroke-dasharray="5 5"/>
+            </svg><span class="tag">Zone risk</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EQUATION -->
+  <section class="eq" id="model" data-nav="night">
+    <div class="wrap">
+      <p class="eyebrow">The model</p>
+      <div class="formula" aria-label="Risk equals kappa times the sum over species of hazard times vulnerability times exposure">
+        <span>Risk</span><span class="op">=</span><span class="sym">κ</span><span class="sym">Σ</span>
+        <span class="t">Hazard</span><span class="op">×</span><span class="t">Severity</span><span class="op">×</span><span class="t e">Exposure</span>
+      </div>
+      <div class="terms">
+        <div class="term">
+          <h3>Hazard</h3><span class="u">Birds per survey-hour, per species</span>
+          <p>How many birds are there, corrected for how hard people looked. Flocking species get weighted for the bad days, not just the average one.</p>
+        </div>
+        <div class="term">
+          <h3>Severity</h3><span class="u">Damage given a strike</span>
+          <p>Driven by body mass and fitted to recorded strike outcomes. A 3 kg goose and a 20 g swallow are not the same event.</p>
+        </div>
+        <div class="term e">
+          <h3>Exposure</h3><span class="u">Time spent low in each ring</span>
+          <p>A 3° approach is still below 3,000 ft at 10 NM. A climb-out clears that height inside 5 NM. Arrival and departure risk differ because the aircraft is somewhere different.</p>
+        </div>
+      </div>
+      <div class="unitline">
+        <b>Expected damaging strikes per 100,000 movements</b>
+        <span>Every number ships with an interval and a data grade. κ is fitted against held-out strike records, and the model has to beat a movements-only baseline before any score goes live.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- DUSK -->
+  <section class="dusk" data-nav="night" aria-labelledby="duskH">
+    <div class="stars" id="stars"></div>
+    <div class="horizon"></div>
+    <div class="migrants" id="migrants"></div>
+    <div class="wrap">
+      <h2 id="duskH">Most migration happens <em>after dark.</em></h2>
+      <p>Checklists stop at sunset. Radar keeps counting. The demo below lets you switch between day and night and watch the risk move up the altitude profile.</p>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <section class="demo" id="demo" data-nav="night">
+    <div class="wrap">
+      <div class="demo-head">
+        <div>
+          <p class="eyebrow" style="color:var(--n-ink-2)">Interactive preview</p>
+          <h2>One airport.<br>Every ring, every week.</h2>
+        </div>
+        <div>
+          <p>Pick a ring, scrub through the year, switch phase of flight. Everything below is generated by the AeroBird model structure running on illustrative data.</p>
+          <p style="margin-top:14px;display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center"><span class="proto-tag">Prototype · illustrative data · not a forecast</span><a class="btn-sign demo-link" href="demo.html" target="_blank" rel="noopener" data-artifact-href="https://claude.ai/artifact/TKoEqH7kesWyba8yM6FPns"><span class="a">AB</span><span class="b">Open full demo <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 12 12 4M6 4h6v6" stroke="currentColor" stroke-width="2.2"/></svg></span></a></p>
+        </div>
+      </div>
+
+      <div class="console" id="console">
+        <div class="c-top">
+          <div class="icao">LROP<small>OTP · ROMANIA</small></div>
+          <div class="c-top-mid">
+            <div class="nm">Bucharest Henri Coandă</div>
+            <div class="facts mono"><span>Elev 314 ft</span><span>RWY 08L/26R · 08R/26L</span><span>ARP 44°34′N 026°05′E</span></div>
+            <div class="metar"><b>SAMPLE METAR</b> LROP 011150Z 07006KT CAVOK 16/05 Q1021 NOSIG</div>
+          </div>
+          <div class="mono" style="color:var(--n-ink-3);text-align:right">Model v0.1<br>Climatology</div>
+        </div>
+
+        <div class="c-ctrl">
+          <div class="ctl"><span class="ctl-lbl">Phase</span>
+            <div class="seg mag" role="group" aria-label="Phase of flight" id="segPhase">
+              <button type="button" data-v="comb" aria-pressed="true">Combined</button>
+              <button type="button" data-v="arr" aria-pressed="false">Arrival</button>
+              <button type="button" data-v="dep" aria-pressed="false">Departure</button>
+              <button type="button" data-v="haz" aria-pressed="false">Birds only</button>
+            </div>
+          </div>
+          <div class="ctl"><span class="ctl-lbl">Time</span>
+            <div class="seg" role="group" aria-label="Time of day" id="segTime">
+              <button type="button" data-v="day" aria-pressed="true">Day</button>
+              <button type="button" data-v="night" aria-pressed="false">Night</button>
+            </div>
+          </div>
+          <div class="ctl"><span class="ctl-lbl">Range</span>
+            <div class="seg" role="group" aria-label="Map range" id="segZoom">
+              <button type="button" data-v="30" aria-pressed="true">30 NM</button>
+              <button type="button" data-v="12" aria-pressed="false">12 NM</button>
+            </div>
+          </div>
+          <label class="chk" for="evToggle"><input type="checkbox" id="evToggle" checked> Evidence</label>
+        </div>
+
+        <div class="c-main">
+          <div class="c-map">
+            <svg id="chart" viewBox="0 0 600 600" role="img" aria-label="Chart of LROP with four risk rings"></svg>
+            <div class="map-foot">
+              <div class="legend" id="legend"></div>
+              <span class="disclaim">Schematic geography · not for navigation</span>
+            </div>
+          </div>
+
+          <aside class="c-panel" id="panel" aria-live="polite">
+            <div class="p-head">
+              <div class="p-zone" id="pZone">5–10 NM</div>
+              <span class="chip band" id="pBand">Moderate</span>
+              <span class="chip grade" id="pGrade">Grade B</span>
+            </div>
+            <div>
+              <div class="p-num" id="pNum"><span class="v" id="pVal">0.00</span><span class="u" id="pUnit">damaging strikes per 100,000 movements</span></div>
+              <div class="ci" id="ci">
+                <div class="ci-axis">
+                  <div class="ci-bands" id="ciBands"></div>
+                  <div class="ci-range" id="ciRange"></div>
+                  <div class="ci-pt" id="ciPt"></div>
+                </div>
+                <div class="ci-ticks" id="ciTicks"></div>
+                <div class="ci-txt" id="ciTxt"></div>
+              </div>
+            </div>
+            <div class="split">
+              <div><span class="k">Arrival</span><div class="n" id="sArr">0.0</div><div class="bar"><i id="sArrB"></i></div></div>
+              <div><span class="k">Departure</span><div class="n" id="sDep">0.0</div><div class="bar"><i id="sDepB"></i></div></div>
+            </div>
+            <div class="p-sec">
+              <h4>What’s driving it <b id="spCount"></b></h4>
+              <ul class="sp-list" id="spList"></ul>
+              <p class="driver" id="driver"></p>
+            </div>
+            <div class="p-sec">
+              <h4>Radar altitude profile <b id="ovTxt"></b></h4>
+              <svg id="radarChart" viewBox="0 0 320 200" role="img" aria-label="Bird density by altitude"></svg>
+            </div>
+            <div class="p-sec">
+              <h4>Evidence this week</h4>
+              <div class="ev" id="ev"></div>
+              <p class="ev-note" id="evNote"></p>
+            </div>
+          </aside>
+        </div>
+
+        <div class="c-time">
+          <div class="t-row">
+            <button class="play" id="play" type="button" aria-label="Play through the year">
+              <svg viewBox="0 0 16 16" id="playIcon"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>
+            </button>
+            <div>
+              <div class="t-week" id="tWeek">W40</div>
+              <div class="t-dates" id="tDates"></div>
+            </div>
+            <div class="t-season" id="tSeason"></div>
+          </div>
+          <label for="week" class="mono" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Week of year</label>
+          <input type="range" id="week" min="1" max="52" value="40">
+          <div class="cal-wrap"><div class="cal" id="cal"></div></div>
+        </div>
+      </div>
+      <div class="demo-more">
+        <p>This is the quick view. The full console has eight screens: briefing, approach-path risk, a 52-week outlook, species register, radar altitude, airside log and the evidence behind every score.</p>
+        <a class="btn-sign demo-link" href="demo.html" target="_blank" rel="noopener" data-artifact-href="https://claude.ai/artifact/TKoEqH7kesWyba8yM6FPns"><span class="a">AB</span><span class="b">Open the full console <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 12 12 4M6 4h6v6" stroke="currentColor" stroke-width="2.2"/></svg></span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRINCIPLES -->
+  <section class="princ" data-nav="night">
+    <div class="wrap">
+      <p class="eyebrow" style="color:var(--n-ink-3)">House rules</p>
+      <div class="pr"><span class="k">Rule 1</span><h3 data-drift="-1">No data is <em>not</em> low risk.</h3><p>A ring without enough evidence shows no score at all. It never fades to green. Scrub to the first weeks of January in the demo to see it.</p></div>
+      <div class="pr"><span class="k">Rule 2</span><h3 data-drift="1">Every number has an interval.</h3><p>Each score carries its uncertainty range and a data grade. A thin estimate looks thin.</p></div>
+      <div class="pr"><span class="k">Rule 3</span><h3 data-drift="-1">Beat the baseline or <em>stay dark.</em></h3><p>The model has to predict strike rates better than aircraft movements alone, on airports it has never seen. If it can’t, it doesn’t ship.</p></div>
+    </div>
+  </section>
+
+  <!-- WAITLIST -->
+  <section class="wl" id="waitlist" data-nav="sign">
+    <div class="wrap wl-grid">
+      <div class="wl-copy">
+        <div class="signpair" aria-hidden="true"><span class="loc">AB</span><span class="dir">Waitlist <svg viewBox="0 0 22 22" fill="none"><path d="M3 11h15M12 5l6 6-6 6" stroke="currentColor" stroke-width="3"/></svg></span></div>
+        <h2>Hold short.</h2>
+        <p>We’re building the first release with a small group of airports and operators. Tell us where you fly and we’ll call you when your field is ready.</p>
+        <ul>
+          <li><span>01</span>Early access to forecasts for your airport</li>
+          <li><span>02</span>A say in what the first release covers</li>
+          <li><span>03</span>Your airside data stays yours</li>
+        </ul>
+      </div>
+      <form class="wl-form" id="wlForm" novalidate>
+        <div class="f"><label for="wlEmail">Work email</label><input id="wlEmail" name="email" type="email" autocomplete="email" placeholder="you@airline.aero" required></div>
+        <div class="f"><label for="wlName">Name</label><input id="wlName" name="name" type="text" autocomplete="name" placeholder="Captain, ops lead, wildlife officer…"></div>
+        <div class="f-row">
+          <div class="f"><label for="wlOrg">Organisation</label><input id="wlOrg" name="org" type="text" autocomplete="organization" placeholder="Airline or airport"></div>
+          <div class="f"><label for="wlIcao">Airport ICAO</label><input id="wlIcao" name="icao" type="text" maxlength="4" placeholder="LROP" style="text-transform:uppercase;font-family:var(--f-mono)"></div>
+        </div>
+        <div class="f"><label for="wlRole">Role</label>
+          <select id="wlRole" name="role">
+            <option>Flight safety</option>
+            <option>Airport wildlife hazard management</option>
+            <option>Flight operations</option>
+            <option>Pilot</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="f-err" id="wlErr" role="alert"></div>
+        <button class="submit" type="submit">Request clearance <svg viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3 11h15M12 5l6 6-6 6" stroke="currentColor" stroke-width="3"/></svg></button>
+        <p class="f-note">Preview build. This form doesn’t send anything yet.</p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer data-nav="night">
+  <div class="wrap ft">
+    <a class="brand" href="#top" aria-label="AeroBird">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="1.6" stroke-dasharray="64 24" transform="rotate(-30 16 16)"/>
+        <circle cx="16" cy="16" r="8.5" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+        <path d="M7 19.5 L14 14 L16.2 16.4 L18.4 14 L25.5 19.5" stroke="#F5C518" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <b>AeroBird</b>
+    </a>
+    <div class="ft-cols">
+      <div><h4>Status</h4><p>Prototype. All demo figures are illustrative and generated for demonstration. Not for operational use.</p></div>
+      <div><h4>Planned sources</h4><p>Weather-radar bird profiles, survey-corrected citizen science, national strike databases and operator wildlife logs.</p></div>
+      <div><h4>© 2026 AeroBird</h4><p>Decision support for wildlife hazard management. Not a certified safety product.</p></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const SVGNS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, attrs = {}, parent) => {
+  const el = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(el);
+  return el;
+};
+const fmt = (n, d = 0) => n.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
+function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const hash = (a, b, c) => { let h = (a * 73856093) ^ (b * 19349663) ^ (c * 83492791); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
+
+/* demo links: relative on the site, artifact URL inside the artifact viewer */
+if (window.self !== window.top) $$(".demo-link[data-artifact-href]").forEach(a => { a.href = a.dataset.artifactHref; });
+
+/* ════════ Ticker ════════ */
+(() => {
+  const items = [
+    "<b>SAMPLE FEED</b>", "LROP 011150Z 07006KT CAVOK 16/05 Q1021 NOSIG",
+    "W40 FCST 5–10 NM ARR HIGH", "STARLING ROOST FLIGHTS AT DUSK", "LAPWING FLOCKS ON AIRSIDE GRASS",
+    "RADAR: NOCTURNAL PASSAGE 1,500–4,000 FT", "CORMORANT MOVEMENTS SNAGOV ↔ COLENTINA AT DAWN",
+    "GULL COMMUTE RUDENI LANDFILL ↔ SNAGOV", "W44 FCST GREYLAG ARRIVALS BEGIN"
+  ];
+  const html = items.map(t => `<span>${t}<i>▪</i></span>`).join("");
+  $("#tickerTrack").innerHTML = html + html;
+})();
+
+/* ════════ Hero flock (boids) ════════ */
+(() => {
+  const cv = $("#flock"), hero = $(".hero");
+  const ctx = cv.getContext("2d");
+  let W = 0, H = 0, dpr = 1, birds = [], running = true, mouse = { x: -9999, y: -9999 }, t0 = performance.now();
+  function size() {
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = hero.clientWidth; H = hero.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function seed() {
+    const n = W < 700 ? 120 : 240, r = rng(7);
+    birds = Array.from({ length: n }, () => ({ x: W * (0.45 + r() * 0.4), y: H * (0.15 + r() * 0.4), vx: r() * 2 - 1, vy: r() * 2 - 1 }));
+  }
+  function step(t) {
+    const ax = W * (0.66 + 0.22 * Math.sin(t * 0.00027)), ay = H * (0.36 + 0.2 * Math.sin(t * 0.00041 + 1.3));
+    const n = birds.length;
+    for (let i = 0; i < n; i++) {
+      const b = birds[i];
+      let cx = 0, cy = 0, avx = 0, avy = 0, sx = 0, sy = 0, c = 0;
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue;
+        const o = birds[j], dx = o.x - b.x, dy = o.y - b.y, d2 = dx * dx + dy * dy;
+        if (d2 < 1600) { cx += o.x; cy += o.y; avx += o.vx; avy += o.vy; c++; if (d2 < 140) { sx -= dx / (d2 + 1) * 14; sy -= dy / (d2 + 1) * 14; } }
+      }
+      if (c) { b.vx += ((cx / c - b.x) * 0.0024 + (avx / c - b.vx) * 0.06); b.vy += ((cy / c - b.y) * 0.0024 + (avy / c - b.vy) * 0.06); }
+      b.vx += sx * 0.05 + (ax - b.x) * 0.00018; b.vy += sy * 0.05 + (ay - b.y) * 0.00018;
+      const mx = b.x - mouse.x, my = b.y - mouse.y, md = mx * mx + my * my;
+      if (md < 16000) { const f = 1.6 / Math.sqrt(md + 1); b.vx += mx * f; b.vy += my * f; }
+      const sp = Math.hypot(b.vx, b.vy), mxs = 3.1, mns = 1.5;
+      if (sp > mxs) { b.vx *= mxs / sp; b.vy *= mxs / sp; } else if (sp < mns) { b.vx *= mns / (sp || 1); b.vy *= mns / (sp || 1); }
+      b.x += b.vx; b.y += b.vy;
+      if (b.x < -40) b.x = W + 40; if (b.x > W + 40) b.x = -40;
+      if (b.y < -40) b.y = H + 40; if (b.y > H + 40) b.y = -40;
+    }
+  }
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(11,14,17,.78)"; ctx.lineWidth = 1.25; ctx.lineCap = "round";
+    ctx.beginPath();
+    for (const b of birds) {
+      const a = Math.atan2(b.vy, b.vx), L = 4.2;
+      const flap = Math.sin(b.x * 0.09 + b.y * 0.07) * 0.35;
+      ctx.moveTo(b.x - Math.cos(a - 0.62 - flap) * L, b.y - Math.sin(a - 0.62 - flap) * L);
+      ctx.lineTo(b.x, b.y);
+      ctx.lineTo(b.x - Math.cos(a + 0.62 + flap) * L, b.y - Math.sin(a + 0.62 + flap) * L);
+    }
+    ctx.stroke();
+  }
+  function loop(t) { if (running) { step(t - t0); draw(); } requestAnimationFrame(loop); }
+  size(); seed();
+  if (REDUCED) { for (let i = 0; i < 260; i++) step(i * 16); draw(); }
+  else requestAnimationFrame(loop);
+  new IntersectionObserver(e => { running = e[0].isIntersecting; }).observe(hero);
+  addEventListener("resize", () => { const ow = W; size(); if (Math.abs(ow - W) > 120) seed(); if (REDUCED) draw(); });
+  hero.addEventListener("pointermove", e => {
+    const r = hero.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+    const lat = 44.5711 + (0.5 - mouse.y / r.height) * 0.42, lon = 26.0851 + (mouse.x / r.width - 0.5) * 0.8;
+    const dm = v => { const d = Math.floor(Math.abs(v)); return [d, ((Math.abs(v) - d) * 60).toFixed(2)]; };
+    const [la, lm] = dm(lat), [lo, lom] = dm(lon);
+    $("#readout").textContent = `N${la}°${lm.padStart(5, "0")}′ E${String(lo).padStart(3, "0")}°${lom.padStart(5, "0")}′`;
+  });
+  hero.addEventListener("pointerleave", () => { mouse.x = mouse.y = -9999; });
+  if (REDUCED) { const m = $("#acMotion"); if (m) m.remove(); }
+})();
+
+/* ════════ Altitude tape ════════ */
+const tape = (() => {
+  const track = $("#tapeTrack"), box = $("#tapeBox");
+  const MAX = 6000, STEP = 100, PX = 12;
+  let html = "";
+  for (let a = MAX; a >= 0; a -= STEP) html += `<div class="${a % 500 === 0 ? "maj" : ""}">${a % 500 === 0 ? `<span>${a}</span>` : ""}</div>`;
+  track.innerHTML = html;
+  return p => {
+    const alt = clamp(2818 + (p - 0.5) * 5200, 0, MAX);
+    const y = (MAX - alt) / STEP * PX;
+    track.style.transform = `translateY(${170 - y}px)`;
+    const lock = Math.abs(alt - 2818) < 90;
+    box.textContent = lock ? "2818" : String(Math.round(alt / 10) * 10);
+    box.classList.toggle("lock", lock);
+  };
+})();
+
+/* ════════ Iso stack planes (generated textures) ════════ */
+(() => {
+  const r = rng(11), p0 = $("#pl0");
+  for (let i = 0; i < 46; i++) {
+    const x = 20 + r() * 230, y = 20 + r() * 230, s = 3 + r() * 2.5;
+    svgEl("path", { d: `M${x - s} ${y - s}L${x + s} ${y + s}M${x + s} ${y - s}L${x - s} ${y + s}`, stroke: "#C0157A", "stroke-width": 1.6 }, p0);
+  }
+  for (let i = 0; i < 5; i++) svgEl("circle", { cx: 40 + r() * 190, cy: 40 + r() * 190, r: 9, fill: "none", stroke: "#C0157A", "stroke-width": 1.2 }, p0);
+  const p2 = $("#pl2"), r2 = rng(5);
+  [[80, 90, 26], [175, 120, 18], [120, 190, 22], [200, 205, 10]].forEach(([cx, cy, n]) => {
+    for (let i = 0; i < n; i++) {
+      const a = r2() * 6.28, d = r2() * 28, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d;
+      svgEl("path", { d: `M${x - 3} ${y + 1.5}L${x} ${y - 1}L${x + 3} ${y + 1.5}`, fill: "none", stroke: "#0B0E11", "stroke-width": 1.3 }, p2);
+    }
+  });
+  const stack = $("#stack");
+  $$(".layer-item").forEach(li => {
+    li.addEventListener("pointerenter", () => { stack.dataset.on = li.dataset.l; $$(".layer-item").forEach(x => x.classList.toggle("on", x === li)); });
+    li.addEventListener("pointerleave", () => { delete stack.dataset.on; li.classList.remove("on"); });
+  });
+})();
+
+/* ════════ Dusk: stars + migrants ════════ */
+(() => {
+  const s = $("#stars"), r = rng(3);
+  let h = "";
+  for (let i = 0; i < 90; i++) h += `<i style="left:${(r() * 100).toFixed(2)}%;top:${(r() * 100).toFixed(2)}%;opacity:${(0.25 + r() * 0.75).toFixed(2)};animation-delay:${(r() * 3).toFixed(2)}s;animation-duration:${(2 + r() * 3).toFixed(2)}s"></i>`;
+  s.innerHTML = h;
+  if (REDUCED) return;
+  const m = $("#migrants"), r2 = rng(9);
+  let k = "";
+  for (let i = 0; i < 26; i++) {
+    k += `<span style="left:${(-10 - r2() * 20).toFixed(1)}%;top:${(55 + r2() * 45).toFixed(1)}%;animation-duration:${(14 + r2() * 14).toFixed(1)}s;animation-delay:${(-r2() * 28).toFixed(1)}s;opacity:${(0.35 + r2() * 0.6).toFixed(2)}"><svg viewBox="0 0 7 4"><path d="M0 3.6 L3.5 .6 L7 3.6" fill="none" stroke="currentColor" stroke-width="1"/></svg></span>`;
+  }
+  m.innerHTML = k;
+})();
+
+/* ════════ Scroll engine: progress route, nav theme, parallax ════════ */
+(() => {
+  const fixes = [["TAKOF", "#top"], ["ALTUD", "#alt"], ["FAULT", "#problem"], ["LAYRS", "#method"], ["MODEL", "#model"], ["DEMOS", "#demo"], ["HOLDS", "#waitlist"]];
+  const route = $("#route");
+  const fixEls = fixes.map(([name, sel]) => {
+    const a = document.createElement("a"); a.className = "route-fix"; a.textContent = name; a.href = sel; route.appendChild(a);
+    return { a, sec: $(sel) };
+  });
+  const navSecs = $$("[data-nav]");
+  const alt = $("#alt"), stack = $("#stack"), drifts = $$("[data-drift]"), eq = $(".eq");
+  let ticking = false;
+  function frame() {
+    ticking = false;
+    const sy = scrollY, vh = innerHeight, docH = document.documentElement.scrollHeight - vh;
+    const p = docH > 0 ? sy / docH : 0;
+    $("#routeFill").style.width = (p * 100) + "%";
+    $("#routePlane").style.left = (p * 100) + "%";
+    fixEls.forEach(f => {
+      const top = f.sec.offsetTop, frac = docH > 0 ? clamp(top / docH, 0, 1) : 0;
+      f.a.style.left = clamp(frac * 100, 3, 97) + "%";
+      f.a.classList.toggle("on", p >= frac - 0.002);
+    });
+    const probe = 70;
+    for (const s of navSecs) { const r = s.getBoundingClientRect(); if (r.top <= probe && r.bottom > probe) { document.body.dataset.nav = s.dataset.nav; break; } }
+    const ar = alt.getBoundingClientRect();
+    tape(clamp((vh - ar.top) / (vh + ar.height), 0, 1));
+    if (!REDUCED) {
+      const sr = stack.getBoundingClientRect();
+      const sp = clamp((vh - sr.top) / (vh + sr.height), 0, 1);
+      stack.style.setProperty("--spread", (34 + sp * 64).toFixed(1) + "px");
+      drifts.forEach(h => {
+        const r = h.getBoundingClientRect(), q = clamp((vh - r.top) / (vh + r.height), 0, 1) - 0.5;
+        h.style.transform = `translateX(${(q * 90 * +h.dataset.drift).toFixed(1)}px)`;
+      });
+    }
+    const er = eq.getBoundingClientRect();
+    if (er.top < vh * 0.75 && er.bottom > 0) eq.classList.add("in");
+  }
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } }, { passive: true });
+  addEventListener("resize", frame);
+  frame();
+})();
+
+/* ════════════════════════ DEMO ════════════════════════ */
+const circ = (w, m) => { const d = Math.abs(w - m) % 52; return Math.min(d, 52 - d); };
+const g = (w, m, s) => Math.exp(-0.5 * (circ(w, m) / s) ** 2);
+const ZONES = [
+  { id: "0–5 NM", r0: 0, r1: 5 }, { id: "5–10 NM", r0: 5, r1: 10 },
+  { id: "10–20 NM", r0: 10, r1: 20 }, { id: "20–30 NM", r0: 20, r1: 30 }
+];
+// code, name, latin, mass g, flock F, base rate, season(w), zone affinity, night class, habitat note
+const SP = [
+  ["eursta", "Common Starling", "Sturnus vulgaris", 78, 9, 4.0, w => 0.2 + 1.3 * g(w, 40, 4) + 0.45 * g(w, 12, 3), [0.9, 1.0, 0.7, 0.4], "r", "roosting in reedbeds and feeding on airside grass"],
+  ["bkhgul", "Black-headed Gull", "Chroicocephalus ridibundus", 280, 4, 2.2, w => 0.35 + 0.95 * g(w, 2, 7), [0.5, 1.0, 0.8, 0.5], "r", "commuting between Rudeni landfill and Lacul Snagov"],
+  ["casgul", "Caspian Gull", "Larus cachinnans", 1150, 3, 0.9, w => 0.3 + 1.0 * g(w, 50, 7), [0.3, 1.0, 0.9, 0.4], "r", "commuting between the Rudeni and Glina landfills"],
+  ["rook", "Rook", "Corvus frugilegus", 450, 6, 2.6, w => 0.12 + 1.15 * g(w, 3, 6), [0.6, 1.0, 0.8, 0.4], "r", "from winter roosts in north Bucharest parks"],
+  ["jackda", "Western Jackdaw", "Coloeus monedula", 240, 4, 1.4, w => 0.4 + 0.7 * g(w, 4, 7), [0.5, 0.9, 0.8, 0.5], "r", "from urban roosts in north Bucharest"],
+  ["rocpig", "Rock Dove", "Columba livia", 350, 3, 1.6, w => 0.9 + 0.1 * Math.sin(w / 8.3), [0.7, 1.0, 0.6, 0.3], "r", "along the urban edge at Otopeni and Băneasa"],
+  ["eurkes", "Common Kestrel", "Falco tinnunculus", 200, 1, 0.35, w => 0.6 + 0.6 * g(w, 30, 8), [1.0, 0.6, 0.5, 0.5], "r", "hunting over airside grassland"],
+  ["norlap", "Northern Lapwing", "Vanellus vanellus", 220, 6, 0.8, w => 0.15 + 1.1 * g(w, 42, 5) + 0.55 * g(w, 11, 3), [1.0, 0.5, 0.6, 0.7], "r", "feeding on airside grassland"],
+  ["skylar", "Eurasian Skylark", "Alauda arvensis", 38, 2, 1.2, w => 0.25 + 0.85 * g(w, 18, 8), [1.0, 0.4, 0.6, 0.8], "r", "nesting in airside grassland"],
+  ["comswi", "Common Swift", "Apus apus", 40, 4, 2.0, w => 0.01 + 1.25 * g(w, 26, 5), [0.6, 1.0, 0.8, 0.6], "r", "feeding in the air over the urban edge"],
+  ["barswa", "Barn Swallow", "Hirundo rustica", 19, 3, 1.5, w => 0.01 + 1.0 * g(w, 24, 7) + 0.6 * g(w, 36, 3), [0.8, 0.8, 0.7, 0.6], "r", "feeding low over grass and water"],
+  ["gragoo", "Greylag Goose", "Anser anser", 3300, 5, 0.3, w => 0.2 + 1.1 * g(w, 46, 5) + 0.75 * g(w, 9, 4), [0.1, 0.9, 1.0, 0.6], "w", "wintering on Lacul Snagov and Căldăruşani"],
+  ["gwfgoo", "Greater White-fronted Goose", "Anser albifrons", 2300, 8, 0.6, w => 1.35 * g(w, 1, 5), [0.05, 0.6, 1.0, 0.9], "w", "wintering on Lacul Snagov and Căldăruşani"],
+  ["grecor", "Great Cormorant", "Phalacrocorax carbo", 2300, 4, 0.5, w => 0.3 + 0.9 * g(w, 44, 6), [0.1, 1.0, 0.9, 0.4], "w", "fishing Lacul Snagov and the Colentina lakes"],
+  ["graher", "Grey Heron", "Ardea cinerea", 1500, 1, 0.3, w => 0.7 + 0.35 * g(w, 30, 8), [0.2, 1.0, 0.8, 0.5], "r", "fishing the lake margins"],
+  ["whisto", "White Stork", "Ciconia ciconia", 3400, 7, 0.25, w => 0.03 + 0.6 * g(w, 30, 10) + 1.7 * g(w, 35, 2) + 0.6 * g(w, 13, 2), [0.4, 0.7, 0.9, 1.0], "r", "on passage along the Ialomiţa valley"],
+  ["combuz", "Common Buzzard", "Buteo buteo", 850, 1, 0.3, w => 0.7 + 0.65 * g(w, 38, 4), [0.6, 0.6, 0.8, 1.0], "r", "soaring over farmland"],
+  ["mallar", "Mallard", "Anas platyrhynchos", 1100, 4, 0.8, w => 0.4 + 0.7 * g(w, 50, 8), [0.2, 1.0, 0.9, 0.5], "w", "on Lacul Snagov and the Colentina lakes"]
+];
+const MIG = ["noc", "Nocturnal migrants", "Unidentified · radar only", 25, 1, 70];
+const migW = w => g(w, 40, 4) + 0.6 * g(w, 16, 3);
+const P = m => 1 / (1 + Math.exp(-(-0.847 + 0.778 * Math.log(m / 1000))));
+const V = m => P(m) / P(1000);
+const OA = [1.0, 0.85, 0.18, 0.04], OD = [0.85, 0.12, 0.02, 0.0];
+const K = 0.045;
+const BANDS = ["Very low", "Low", "Moderate", "High", "Severe"];
+const RISK_T = [0.1, 0.3, 0.6, 1.2], HAZ_T = [1, 2.5, 4.5, 7];
+const BAND_C = ["var(--r0)", "var(--r1)", "var(--r2)", "var(--r3)", "var(--r4)"];
+const BAND_HEX = ["#2B6A5E", "#3BB487", "#E7BF3B", "#F47D24", "#F0392C"];
+const ARR_FT = [[0, 1600], [1600, 3200], [3200, 6400], [6400, 9600]];
+const DEP_FT = [[0, 3600], [3600, 7000], [7000, 13000], [13000, 20000]];
+
+function evidence(z, w) {
+  const season = 0.7 + 0.5 * g(w, 18, 6) + 0.5 * g(w, 40, 6);
+  const checklists = Math.round([4, 38, 92, 30][z] * season * (0.8 + 0.4 * hash(z, w, 5)));
+  const logs = Math.round([46, 9, 0, 0][z] * (0.85 + 0.3 * hash(z, w, 9)));
+  const radarH = w <= 3 ? 0 : Math.round(168 * (0.9 + 0.1 * hash(z, w, 2)));
+  const grade = eff => eff >= 120 ? "A" : eff >= 60 ? "B" : eff >= 25 ? "C" : null;
+  const eff = checklists + 2 * logs + (radarH ? 30 : 0);
+  return { checklists, logs, radarH, grade: grade(eff), gradeNoLogs: grade(eff - 2 * logs) };
+}
+
+function compute(z, w, night) {
+  const parts = SP.map((s, i) => {
+    const nm = night ? (s[8] === "w" ? 0.6 : 0.15) : 1;
+    const rate = s[5] * s[6](w) * s[7][z] * nm * (0.9 + 0.2 * hash(i, z, w));
+    return { s, rate, val: rate * s[4] * V(s[3]) };
+  });
+  if (night) { const rate = MIG[5] * migW(w) * (0.9 + 0.2 * hash(99, z, w)); parts.push({ s: MIG, rate, val: rate * MIG[4] * V(MIG[3]) }); }
+  const S = parts.reduce((a, p) => a + p.val, 0);
+  const ev = evidence(z, w);
+  return { S, parts, arr: K * S * OA[z], dep: K * S * OD[z], comb: K * S * (OA[z] + OD[z]) / 2, haz: S / 7, ev, unknown: !ev.grade };
+}
+const DATA = { day: [], night: [] };
+for (const t of ["day", "night"]) for (let z = 0; z < 4; z++) { DATA[t][z] = []; for (let w = 1; w <= 52; w++) DATA[t][z][w] = compute(z, w, t === "night"); }
+
+const state = { week: 40, zone: 1, phase: "comb", time: "day", zoom: 30, evidence: true, playing: false };
+const cur = (z = state.zone, w = state.week) => DATA[state.time][z][w];
+const metric = (d, ph = state.phase) => ph === "haz" ? d.haz : d[ph];
+const bandOf = (v, ph = state.phase) => { const T = ph === "haz" ? HAZ_T : RISK_T; let b = 0; while (b < 4 && v >= T[b]) b++; return b; };
+const unitTxt = () => state.phase === "haz" ? "bird hazard index · no aircraft exposure applied" : "expected damaging strikes per 100,000 movements";
+
+/* ── week dates (ISO 2026) ── */
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const wkStart = w => new Date(Date.UTC(2025, 11, 29) + (w - 1) * 7 * 864e5);
+const dstr = d => `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`;
+const seasonOf = w => w >= 49 || w <= 8 ? "Winter · geese & corvid roosts" : w <= 20 ? "Spring passage" : w <= 31 ? "Breeding · swifts & swallows" : w <= 46 ? "Autumn passage · starlings & lapwing" : "Early winter · gulls & geese";
+
+/* ── Chart construction ── */
+const chart = $("#chart");
+const C = 300, PX = 9, D2R = Math.PI / 180;
+const LAT0 = 44.5711, LON0 = 26.0851, COSL = Math.cos(LAT0 * D2R);
+const nm2xy = (dx, dy) => [C + dx * PX, C - dy * PX];
+const ll2xy = (lat, lon) => nm2xy((lon - LON0) * 60 * COSL, (lat - LAT0) * 60);
+const scaled = [];
+function crPath(pts, closed) {
+  const n = pts.length; if (n < 2) return "";
+  const P_ = i => pts[closed ? (i + n) % n : clamp(i, 0, n - 1)];
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  const segs = closed ? n : n - 1;
+  for (let i = 0; i < segs; i++) {
+    const p0 = P_(i - 1), p1 = P_(i), p2 = P_(i + 1), p3 = P_(i + 2);
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += `C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+  }
+  return d + (closed ? "Z" : "");
+}
+function blob(cx, cy, R, seed, k = 0.18) {
+  const r = rng(seed), ph = [r() * 6, r() * 6, r() * 6], pts = [];
+  for (let i = 0; i < 28; i++) {
+    const a = i / 28 * Math.PI * 2;
+    const rr = R * (1 + k * Math.sin(2 * a + ph[0]) + k * 0.7 * Math.sin(3 * a + ph[1]) + k * 0.45 * Math.sin(5 * a + ph[2]));
+    pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]);
+  }
+  return crPath(pts, true);
+}
+function ribbon(ptsNM, wNM) {
+  const pts = ptsNM.map(p => nm2xy(p[0], p[1])), w = wNM * PX, L = [], R = [];
+  pts.forEach((p, i) => {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const l = Math.hypot(nx, ny) || 1; nx /= l; ny /= l;
+    const ww = w * (0.6 + 0.4 * Math.sin(i * 1.7 + 1));
+    L.push([p[0] + nx * ww, p[1] + ny * ww]); R.push([p[0] - nx * ww, p[1] - ny * ww]);
+  });
+  return crPath([...L, ...R.reverse()], true);
+}
+const ann = (r0, r1) => {
+  const c = r => `M${C - r} ${C}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`;
+  return r0 === 0 ? c(r1) : c(r1) + c(r0);
+};
+function lbl(parent, x, y, text, size, cls = "", anchor = "middle") {
+  const t = svgEl("text", { x, y, "text-anchor": anchor, class: "lbl " + cls, "dominant-baseline": "middle" }, parent);
+  t.textContent = text; scaled.push({ el: t, attr: "font-size", base: size }); return t;
+}
+
+const defs = svgEl("defs", {}, chart);
+defs.innerHTML = `
+  <clipPath id="clip30"><circle cx="300" cy="300" r="270"/></clipPath>
+  <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#0A1017"/><line x1="0" y1="0" x2="0" y2="6" stroke="#5B6773" stroke-width="2"/></pattern>
+  <pattern id="city" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#55626F" stroke-width=".8"/></pattern>
+  <radialGradient id="vig" cx="50%" cy="50%" r="50%"><stop offset="70%" stop-color="#05080C" stop-opacity="0"/><stop offset="100%" stop-color="#05080C" stop-opacity=".7"/></radialGradient>
+  <linearGradient id="sweepG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#46D2F2" stop-opacity="0"/><stop offset="1" stop-color="#46D2F2" stop-opacity=".22"/></linearGradient>`;
+
+svgEl("circle", { cx: C, cy: C, r: 270, fill: "#080D13" }, chart);
+const geo = svgEl("g", { "clip-path": "url(#clip30)" }, chart);
+
+// graticule
+[[44.25, "44°15′"], [44.4167, "44°25′"], [44.5833, "44°35′"], [44.75, "44°45′"], [44.9167, "44°55′"]].forEach(([lat, t]) => {
+  const [, y] = ll2xy(lat, LON0); svgEl("line", { x1: 0, x2: 600, y1: y, y2: y, stroke: "#141E29", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, geo);
+  lbl(geo, 44, y - 6, t, 8, "", "start");
+});
+[[25.5, "25°30′"], [25.8333, "25°50′"], [26.1667, "26°10′"], [26.5, "26°30′"], [26.8333, "26°50′"]].forEach(([lon, t]) => {
+  const [x] = ll2xy(LAT0, lon); svgEl("line", { x1: x, x2: x, y1: 0, y2: 600, stroke: "#141E29", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, geo);
+});
+
+// terrain features
+const city = svgEl("path", { d: blob(...nm2xy(0.7, -8.7), 6.0 * PX, 21, 0.14), fill: "url(#city)", stroke: "#2A3644", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, geo);
+const WATER = "#123A57", WATER_S = "#2A6A93";
+svgEl("path", { d: ribbon([[-1.4, 6.9], [0.0, 7.6], [1.5, 7.1], [2.9, 7.8], [4.3, 7.4], [5.6, 8.1], [6.5, 7.8]], 0.42), fill: WATER, stroke: WATER_S, "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, geo);
+svgEl("path", { d: ribbon([[6.6, 5.2], [7.7, 5.7], [8.8, 5.3], [9.8, 5.8]], 0.36), fill: WATER, stroke: WATER_S, "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, geo);
+[[-0.2, -5.8, 0.38], [0.9, -5.4, 0.3], [1.9, -5.75, 0.32], [3.0, -6.05, 0.38], [4.2, -6.45, 0.3]].forEach(([x, y, r], i) => {
+  const [px, py] = nm2xy(x, y); svgEl("path", { d: blob(px, py, r * PX, 40 + i, 0.25), fill: WATER, stroke: WATER_S, "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, geo);
+});
+const riv = []; for (let x = -32; x <= 32; x += 1) riv.push(nm2xy(x, 10.4 + 0.6 * Math.sin(x / 2.3) + 0.3 * Math.sin(x / 0.9)));
+svgEl("path", { d: crPath(riv, false), fill: "none", stroke: WATER_S, "stroke-width": 1.4, "vector-effect": "non-scaling-stroke" }, geo);
+// landfills
+[[-5.3, -6.7, "Rudeni landfill"], [7.05, -10.9, "Glina landfill"]].forEach(([x, y, t]) => {
+  const [px, py] = nm2xy(x, y);
+  svgEl("path", { d: `M${px} ${py - 5}L${px + 5} ${py + 4}L${px - 5} ${py + 4}Z`, fill: "#3A2A12", stroke: "#E7BF3B", "stroke-width": 1.2, "vector-effect": "non-scaling-stroke" }, geo);
+  lbl(geo, px, py + 13, t.toUpperCase(), 8);
+});
+// Băneasa
+(() => { const [px, py] = nm2xy(0.7, -4.1); svgEl("circle", { cx: px, cy: py, r: 4, fill: "none", stroke: "#8E9CAC", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, geo); svgEl("line", { x1: px - 4, y1: py + 1.5, x2: px + 4, y2: py - 1.5, stroke: "#8E9CAC", "stroke-width": 1.5, "vector-effect": "non-scaling-stroke" }, geo); lbl(geo, px + 8, py + 1, "LRBS", 8, "", "start"); })();
+lbl(geo, ...nm2xy(2.8, 9.0), "LACUL SNAGOV", 8.5, "cy");
+lbl(geo, ...nm2xy(8.4, 4.4), "CĂLDĂRUŞANI", 8, "cy");
+lbl(geo, ...nm2xy(-14, 11.6), "R. IALOMIŢA", 8, "cy");
+lbl(geo, ...nm2xy(0.7, -10.6), "BUCUREŞTI", 11, "hi");
+lbl(geo, ...nm2xy(2.2, -7.0), "COLENTINA LAKES", 7.5, "cy");
+
+// rings
+const ringG = svgEl("g", {}, chart);
+const RADII = [0, 5, 10, 20, 30].map(n => n * PX);
+const ringEls = ZONES.map((z, i) => {
+  const p = svgEl("path", { d: ann(RADII[i], RADII[i + 1]), "fill-rule": "evenodd", class: "ring", "fill-opacity": .42, tabindex: 0, role: "button", "aria-label": `Select ring ${z.id}` }, ringG);
+  p.addEventListener("click", () => { stopPlay(); state.zone = i; update(); });
+  p.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); state.zone = i; update(); } });
+  return p;
+});
+const bounds = svgEl("g", { "pointer-events": "none" }, chart);
+RADII.slice(1).forEach(r => svgEl("circle", { cx: C, cy: C, r, fill: "none", stroke: "#3A4856", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, bounds));
+const selRing = svgEl("path", { class: "sel-ring", "fill-rule": "evenodd", "stroke-width": 1.6, "vector-effect": "non-scaling-stroke" }, chart);
+
+// evidence dots
+const dotG = svgEl("g", {}, chart);
+const DOTS = [];
+(() => {
+  const r = rng(77);
+  const hot = [[2.8, 7.5, 1.6], [8.2, 5.5, 1.2], [-5.3, -6.7, 1.0], [7.05, -10.9, 1.1], [1.9, -5.8, 1.6], [0.7, -8.7, 4.5]];
+  for (let i = 0; i < 520; i++) {
+    let x, y, kind = "c";
+    const u = r();
+    if (u < 0.16) { const a = r() * 6.283, d = Math.sqrt(r()) * 3.6; x = Math.cos(a) * d; y = Math.sin(a) * d * 0.7; kind = "l"; }
+    else if (u < 0.62) { const h = hot[Math.floor(r() * hot.length)], a = r() * 6.283, d = Math.sqrt(r()) * h[2]; x = h[0] + Math.cos(a) * d; y = h[1] + Math.sin(a) * d; }
+    else { const a = r() * 6.283, d = 2 + Math.sqrt(r()) * 28; x = Math.cos(a) * d; y = Math.sin(a) * d; }
+    const dist = Math.hypot(x, y); if (dist > 29.5) continue;
+    const z = dist < 5 ? 0 : dist < 10 ? 1 : dist < 20 ? 2 : 3;
+    const [px, py] = nm2xy(x, y);
+    const el = svgEl("circle", { cx: px.toFixed(1), cy: py.toFixed(1), class: "dot", fill: kind === "l" ? "#F5C518" : "#C9D4DE", "fill-opacity": kind === "l" ? .95 : .7 }, dotG);
+    scaled.push({ el, attr: "r", base: kind === "l" ? 1.9 : 1.5 });
+    DOTS.push({ el, z, u: r(), kind });
+  }
+})();
+
+// runways + extended centrelines
+const HDG = 82 * D2R, dX = Math.sin(HDG), dY = -Math.cos(HDG), pX = -dY, pY = dX;
+const flowG = svgEl("g", { "pointer-events": "none" }, chart);
+const FLOWS = { arr: [], dep: [] };
+[1, -1].forEach(s => {
+  const far = [C + s * dX * 268, C + s * dY * 268], near = [C + s * dX * 10, C + s * dY * 10];
+  const o = 3.2;
+  FLOWS.arr.push(svgEl("path", { d: `M${far[0] + pX * o} ${far[1] + pY * o}L${near[0] + pX * o} ${near[1] + pY * o}`, class: "flow", "stroke-width": 1.8, "vector-effect": "non-scaling-stroke" }, flowG));
+  FLOWS.dep.push(svgEl("path", { d: `M${near[0] - pX * o} ${near[1] - pY * o}L${far[0] - pX * o} ${far[1] - pY * o}`, class: "flow", "stroke-width": 1.4, "vector-effect": "non-scaling-stroke" }, flowG));
+});
+const altLbls = [5, 10, 20].map(nm => {
+  const x = C - dX * nm * PX + pX * 16, y = C - dY * nm * PX + pY * 16;
+  return lbl(flowG, x, y, "", 8, "mag");
+});
+const rwyG = svgEl("g", { "pointer-events": "none" }, chart);
+[-1, 1].forEach(s => {
+  const cx = C + pX * s * 3.4, cy = C + pY * s * 3.4, L = 1.89 * PX / 2;
+  svgEl("line", { x1: cx - dX * L, y1: cy - dY * L, x2: cx + dX * L, y2: cy + dY * L, stroke: "#E5EBF1", "stroke-width": 3, "stroke-linecap": "butt", "vector-effect": "non-scaling-stroke" }, rwyG);
+});
+lbl(rwyG, C + 2, C + 15, "LROP", 9, "hi");
+
+// radar sweep
+const sweep = svgEl("g", { "pointer-events": "none" }, chart);
+svgEl("path", { d: `M${C} ${C}L${C} ${C - 270}A270 270 0 0 1 ${C + 270 * Math.sin(38 * D2R)} ${C - 270 * Math.cos(38 * D2R)}Z`, fill: "url(#sweepG)", transform: `rotate(-38 ${C} ${C})` }, sweep);
+svgEl("line", { x1: C, y1: C, x2: C, y2: C - 270, stroke: "#46D2F2", "stroke-opacity": .55, "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, sweep);
+if (!REDUCED) svgEl("animateTransform", { attributeName: "transform", type: "rotate", from: `0 ${C} ${C}`, to: `360 ${C} ${C}`, dur: "7s", repeatCount: "indefinite" }, sweep);
+
+// bearing ring + ring labels
+const brg = svgEl("g", { "pointer-events": "none" }, chart);
+for (let b = 0; b < 360; b += 10) {
+  const a = b * D2R, l = b % 30 === 0 ? 8 : 4, r1 = 270, r2 = 270 + l;
+  svgEl("line", { x1: C + Math.sin(a) * r1, y1: C - Math.cos(a) * r1, x2: C + Math.sin(a) * r2, y2: C - Math.cos(a) * r2, stroke: "#55626F", "stroke-width": 1, "vector-effect": "non-scaling-stroke" }, brg);
+  if (b % 30 === 0) lbl(brg, C + Math.sin(a) * 286, C - Math.cos(a) * 286, String(b).padStart(3, "0"), 8);
+}
+[5, 10, 20, 30].forEach(nm => { const r = nm * PX, a = 315 * D2R; lbl(brg, C + Math.sin(a) * r + 4, C - Math.cos(a) * r - 6, nm === 30 ? "30 NM" : String(nm), 8.5, "hi", "start"); });
+svgEl("circle", { cx: C, cy: C, r: 270, fill: "url(#vig)", "pointer-events": "none" }, chart);
+
+// zoom
+let vb = [0, 0, 600, 600], zoomAnim = 0;
+function applyScale() {
+  const w = chart.getBoundingClientRect().width || 600;
+  const k = w / vb[2];
+  for (const s of scaled) s.el.setAttribute(s.attr, (s.base / k).toFixed(2));
+}
+function setZoom(to) {
+  const target = to === 12 ? [180, 180, 240, 240] : [0, 0, 600, 600];
+  const from = vb.slice(), t0 = performance.now(), dur = REDUCED ? 1 : 750, id = ++zoomAnim;
+  const tick = now => {
+    if (id !== zoomAnim) return;
+    const t = clamp((now - t0) / dur, 0, 1), e = easeIO(t);
+    vb = from.map((v, i) => lerp(v, target[i], e));
+    chart.setAttribute("viewBox", vb.map(v => v.toFixed(2)).join(" "));
+    applyScale();
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+addEventListener("resize", applyScale);
+
+/* ── Legend ── */
+function renderLegend() {
+  const T = state.phase === "haz" ? HAZ_T : RISK_T;
+  const rng_ = i => i === 0 ? `<${T[0]}` : i === 4 ? `≥${T[3]}` : `${T[i - 1]}–${T[i]}`;
+  $("#legend").innerHTML = BANDS.map((b, i) => `<span><i style="background:${BAND_C[i]}"></i>${b} ${rng_(i)}</span>`).join("") +
+    `<span><i class="x"></i>No score</span>` +
+    (state.evidence ? `<span><i style="background:#F5C518;width:6px;height:6px;border-radius:50%"></i>Airside log</span><span><i style="background:#C9D4DE;width:6px;height:6px;border-radius:50%"></i>Checklist</span>` : "");
+}
+
+/* ── Panel ── */
+const tweens = new WeakMap();
+function tweenNum(el, to, dec) {
+  const from = parseFloat(el.dataset.v || "0"), t0 = performance.now(), dur = REDUCED ? 1 : 520;
+  el.dataset.v = to;
+  const id = (tweens.get(el) || 0) + 1; tweens.set(el, id);
+  const step = now => {
+    if (tweens.get(el) !== id) return;
+    const t = clamp((now - t0) / dur, 0, 1), e = 1 - Math.pow(1 - t, 3);
+    el.textContent = fmt(lerp(from, to, e), dec);
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+const logPos = v => clamp((Math.log10(Math.max(v, 0.01)) - Math.log10(0.01)) / (Math.log10(10) - Math.log10(0.01)), 0, 1) * 100;
+
+function sparkPath(code, z) {
+  const arr = [];
+  for (let w = 1; w <= 52; w++) { const p = DATA[state.time][z][w].parts.find(p => p.s[0] === code); arr.push(p ? p.val : 0); }
+  const mx = Math.max(...arr, 1e-6);
+  const pts = arr.map((v, i) => [i / 51 * 58, 20 - v / mx * 18]);
+  const d = "M" + pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L");
+  return { d, area: d + "L58 21L0 21Z", cx: pts[state.week - 1][0], cy: pts[state.week - 1][1] };
+}
+
+function renderPanel() {
+  const d = cur(), z = state.zone, ph = state.phase;
+  const v = metric(d), b = bandOf(v);
+  $("#pZone").textContent = ZONES[z].id;
+  const band = $("#pBand"), grade = $("#pGrade"), num = $("#pNum"), val = $("#pVal");
+  if (d.unknown) {
+    band.textContent = "No score"; band.style.background = "var(--rx)"; band.style.color = "var(--n-ink)";
+    grade.textContent = "Insufficient data";
+    num.classList.add("unknown"); tweens.set(val, (tweens.get(val) || 0) + 1); val.textContent = "No score"; val.dataset.v = "0"; val.style.color = "";
+    $("#pUnit").textContent = "Not enough evidence in this ring this week. Shown as unknown, never as low.";
+    $("#ci").style.opacity = .25;
+    $("#ciTxt").textContent = "Radar outage weeks 1–3 · fewer than 25 effective survey units";
+  } else {
+    band.textContent = BANDS[b]; band.style.background = BAND_C[b]; band.style.color = "var(--night)";
+    grade.textContent = "Grade " + d.ev.grade;
+    num.classList.remove("unknown"); val.style.color = BAND_C[b];
+    tweenNum(val, v, 2);
+    $("#pUnit").textContent = unitTxt();
+    const wdt = { A: 0.3, B: 0.55, C: 0.9 }[d.ev.grade];
+    const lo = v / (1 + wdt), hi = v * (1 + wdt);
+    $("#ci").style.opacity = 1;
+    $("#ciRange").style.left = logPos(lo) + "%"; $("#ciRange").style.width = (logPos(hi) - logPos(lo)) + "%";
+    $("#ciPt").style.left = logPos(v) + "%";
+    $("#ciTxt").textContent = `90% interval ${fmt(lo, 2)} – ${fmt(hi, 2)} · log scale`;
+  }
+  const T = ph === "haz" ? HAZ_T : RISK_T, edges = [0.01, ...T, 10];
+  $("#ciBands").innerHTML = edges.slice(0, -1).map((e, i) => `<i style="background:${BAND_C[i]};flex:${(logPos(edges[i + 1]) - logPos(e)).toFixed(2)}"></i>`).join("");
+  $("#ciTicks").innerHTML = ["0.01", "0.1", "1", "10"].map(t => `<span>${t}</span>`).join("");
+
+  // split
+  const mx = Math.max(d.arr, d.dep, 0.01);
+  if (d.unknown) { $("#sArr").textContent = "—"; $("#sDep").textContent = "—"; $("#sArrB").style.width = "0"; $("#sDepB").style.width = "0"; }
+  else { tweenNum($("#sArr"), d.arr, 2); tweenNum($("#sDep"), d.dep, 2); $("#sArrB").style.width = (d.arr / mx * 100) + "%"; $("#sDepB").style.width = (d.dep / mx * 100) + "%"; }
+
+  // species
+  const tot = d.S || 1;
+  const top = d.parts.slice().sort((a, b) => b.val - a.val).slice(0, 5);
+  $("#spCount").textContent = `${d.parts.filter(p => p.val > 0.05).length} taxa`;
+  const ul = $("#spList");
+  ul.innerHTML = top.map(p => {
+    const sp = sparkPath(p.s[0], z), share = p.val / tot * 100, rad = p.s[0] === "noc";
+    const mass = p.s[3] >= 1000 ? fmt(p.s[3] / 1000, 1) + " kg" : p.s[3] + " g";
+    return `<li class="sp">
+      <div class="sp-name${rad ? " radar" : ""}"><b>${p.s[1]}</b><i>${p.s[2]}</i></div>
+      <div class="sp-mass">${rad ? "~" : ""}${mass}</div>
+      <div class="sp-share"><span class="bar"><i data-w="${share.toFixed(1)}"></i></span>${share.toFixed(0)}%</div>
+      <svg class="sp-spark" viewBox="0 0 58 22"><path d="${sp.area}" fill="${rad ? "#46D2F2" : "#E5EBF1"}" fill-opacity=".12"/><path d="${sp.d}" fill="none" stroke="${rad ? "#46D2F2" : "#8E9CAC"}" stroke-width="1"/><circle cx="${sp.cx.toFixed(1)}" cy="${sp.cy.toFixed(1)}" r="2.2" fill="#FF3FA4"/></svg>
+    </li>`;
+  }).join("");
+  requestAnimationFrame(() => $$("#spList .bar i").forEach(i => { i.style.width = i.dataset.w + "%"; }));
+  const lead = top[0];
+  const leadShare = (lead.val / tot * 100).toFixed(0);
+  const habitat = lead.s[0] === "noc" ? "passing overhead on a broad front, visible to radar only" : lead.s[9];
+  $("#driver").innerHTML = d.unknown
+    ? `Bird activity is still modelled here, but the evidence behind it is too thin to publish a score.`
+    : `<b>${lead.s[1]}</b> drives ${leadShare}% of this ring’s ${ph === "haz" ? "bird hazard" : "risk"} in ${dstr(wkStart(state.week))} week, ${habitat}.` +
+      (ph === "dep" && z >= 1 ? ` Departing aircraft are mostly above the bird layer this far out.` : ph === "arr" && z === 1 ? ` A 3° approach is still between 1,600 and 3,200 ft here.` : "");
+
+  renderRadar();
+
+  // evidence
+  const ev = d.ev, rows = [["Airside wildlife log entries", ev.logs, 50, "#F5C518"], ["Complete eBird checklists", ev.checklists, 140, "#C9D4DE"], ["Radar hours (of 168)", ev.radarH, 168, "#46D2F2"]];
+  $("#ev").innerHTML = rows.map(([k, n, m, c]) => `<div class="ev-row"><span>${k}</span><span class="n">${n}</span><span class="bar"><i style="width:${clamp(n / m * 100, 0, 100)}%;background:${c}"></i></span></div>`).join("");
+  $("#evNote").innerHTML = d.unknown ? `No radar these weeks and only ${ev.checklists} checklists. That is below the bar for a score.`
+    : ev.logs > 0 && ev.gradeNoLogs !== ev.grade ? `Grade ${ev.grade} with airside logs. <b>Without them this ring would grade ${ev.gradeNoLogs || "as unknown"}.</b>`
+    : ev.logs === 0 ? `No airside logs this far out. Radar and checklists carry this ring.` : `Grade ${ev.grade}.`;
+}
+
+function renderRadar() {
+  const svg = $("#radarChart"); svg.innerHTML = "";
+  const W = 320, H = 200, L = 46, R = 8, T = 8, B = 22, maxFt = 10000, bins = 20;
+  const w = state.week, night = state.time === "night";
+  const dens = [];
+  for (let i = 0; i < bins; i++) {
+    const h = (i + 0.5) * 500;
+    let v = night ? 1.0 + 1.2 * Math.exp(-h / 700) + 14 * migW(w) * Math.exp(-0.5 * ((h - 2300) / 1100) ** 2)
+                  : 6 * Math.exp(-h / 700) + 2.5 * g(w, 36, 3) * Math.exp(-0.5 * ((h - 3000) / 1400) ** 2) + 0.4;
+    v *= 0.92 + 0.16 * hash(i, w, night ? 3 : 4);
+    dens.push(v);
+  }
+  const mx = Math.max(...dens, 8);
+  const y = ft => T + (1 - ft / maxFt) * (H - T - B);
+  const x = v => L + v / mx * (W - L - R);
+  svgEl("rect", { x: L, y: T, width: W - L - R, height: H - T - B, fill: "#0A1017" }, svg);
+  const z = state.zone, ph = state.phase, bands = [];
+  if (ph === "arr" || ph === "comb") bands.push(["ARR", ARR_FT[z]]);
+  if (ph === "dep" || ph === "comb") bands.push(["DEP", DEP_FT[z]]);
+  bands.forEach(([k, [a, b]], i) => {
+    if (a >= maxFt) return;
+    const bb = Math.min(b, maxFt);
+    svgEl("rect", { x: L, y: y(bb), width: W - L - R, height: y(a) - y(bb), fill: "#FF3FA4", "fill-opacity": .1, stroke: "#FF3FA4", "stroke-opacity": .6, "stroke-dasharray": "3 3" }, svg);
+    const t = svgEl("text", { x: W - R - 4 - i * 34, y: y(bb) + 11, "text-anchor": "end", "font-family": "Martian Mono, monospace", "font-size": 8, fill: "#FF3FA4" }, svg); t.textContent = k;
+  });
+  const bh = (H - T - B) / bins;
+  let inBand = 0, total = 0;
+  dens.forEach((v, i) => {
+    const lo = i * 500, hi = lo + 500;
+    const inside = bands.some(([, [a, b]]) => lo < b && hi > a);
+    total += v; if (inside) inBand += v;
+    const r = svgEl("rect", { x: L, y: y(hi) + 1, width: 0, height: bh - 2, fill: inside ? "#46D2F2" : "#2B4A5A" }, svg);
+    requestAnimationFrame(() => { r.style.transition = REDUCED ? "none" : `width .5s cubic-bezier(.2,.8,.2,1) ${i * 18}ms`; r.setAttribute("width", Math.max(1, x(v) - L).toFixed(1)); });
+  });
+  [0, 2000, 4000, 6000, 8000, 10000].forEach(ft => {
+    svgEl("line", { x1: L - 4, x2: L, y1: y(ft), y2: y(ft), stroke: "#55626F" }, svg);
+    const t = svgEl("text", { x: L - 7, y: y(ft) + 3, "text-anchor": "end", "font-family": "Martian Mono, monospace", "font-size": 8, fill: "#8E9CAC" }, svg);
+    t.textContent = ft === 0 ? "0" : (ft / 1000) + "k ft";
+  });
+  const t2 = svgEl("text", { x: L, y: H - 6, "font-family": "Martian Mono, monospace", "font-size": 8, fill: "#55626F" }, svg);
+  t2.textContent = (night ? "NIGHT" : "DAY") + " · BIRD DENSITY →";
+  $("#ovTxt").textContent = bands.length ? `${Math.round(inBand / total * 100)}% of birds in aircraft band` : "no aircraft band";
+}
+
+/* ── Map render ── */
+function renderMap() {
+  ZONES.forEach((_, i) => {
+    const d = cur(i), el = ringEls[i];
+    if (d.unknown) { el.setAttribute("fill", "url(#hatch)"); el.setAttribute("fill-opacity", .9); }
+    else { el.setAttribute("fill", BAND_HEX[bandOf(metric(d))]); el.setAttribute("fill-opacity", i === state.zone ? .58 : .4); }
+  });
+  selRing.setAttribute("d", ann(RADII[state.zone], RADII[state.zone + 1]));
+  const ph = state.phase;
+  FLOWS.arr.forEach(p => p.style.opacity = ph === "arr" ? 1 : ph === "comb" ? .9 : ph === "dep" ? .08 : .15);
+  FLOWS.dep.forEach(p => p.style.opacity = ph === "dep" ? 1 : ph === "comb" ? .5 : ph === "arr" ? .08 : .15);
+  const A = ["1,600", "3,200", "6,400"], Dp = ["3,600", "7,000", "13,000"];
+  altLbls.forEach((t, i) => {
+    t.textContent = ph === "arr" ? `ARR ${A[i]} FT` : ph === "dep" ? `DEP ${Dp[i]} FT` : ph === "comb" ? `A ${A[i]} · D ${Dp[i]}` : "";
+  });
+  const mxS = Math.max(...ZONES.map((_, i) => Math.max(...DATA[state.time][i].slice(1).map(d => d.S))));
+  DOTS.forEach(dt => {
+    const act = cur(dt.z).S / mxS;
+    const vis = state.evidence && (dt.kind === "l" ? state.time === "day" : dt.u < 0.25 + act * 0.95);
+    dt.el.style.opacity = vis ? 1 : 0;
+  });
+}
+
+/* ── Timeline + calendar ── */
+const cal = $("#cal"), cells = [];
+(() => {
+  let h = `<div class="mo"></div>`;
+  const firstWeek = {}; for (let w = 1; w <= 52; w++) { const m = wkStart(w).getUTCMonth(); if (!(m in firstWeek) && wkStart(w).getUTCFullYear() === 2026) firstWeek[m] = w; }
+  for (let w = 1; w <= 52; w++) { const m = Object.keys(firstWeek).find(k => firstWeek[k] === w); h += `<div class="mo">${m !== undefined ? MON[m] : ""}</div>`; }
+  cal.innerHTML = h;
+  ZONES.forEach((z, zi) => {
+    const rl = document.createElement("div"); rl.className = "rl"; rl.textContent = z.id; rl.dataset.z = zi; cal.appendChild(rl);
+    rl.addEventListener("click", () => { state.zone = zi; update(); });
+    cells[zi] = [];
+    for (let w = 1; w <= 52; w++) {
+      const c = document.createElement("button"); c.type = "button"; c.className = "c"; c.setAttribute("aria-label", `${z.id}, week ${w}`);
+      c.addEventListener("click", () => { stopPlay(); state.zone = zi; state.week = w; update(); });
+      cal.appendChild(c); cells[zi][w] = c;
+    }
+  });
+})();
+function renderCal() {
+  ZONES.forEach((_, zi) => {
+    for (let w = 1; w <= 52; w++) {
+      const d = DATA[state.time][zi][w], c = cells[zi][w];
+      c.classList.toggle("x", d.unknown);
+      if (!d.unknown) c.style.backgroundColor = BAND_HEX[bandOf(metric(d))];
+      c.classList.toggle("wk", w === state.week);
+      c.classList.toggle("sel", w === state.week && zi === state.zone);
+    }
+  });
+  $$(".cal .rl").forEach(r => r.classList.toggle("on", +r.dataset.z === state.zone));
+}
+function renderTime() {
+  $("#tWeek").textContent = "W" + String(state.week).padStart(2, "0");
+  const s = wkStart(state.week), e = new Date(s.getTime() + 6 * 864e5);
+  $("#tDates").textContent = `${dstr(s)} – ${dstr(e)} · ${state.time === "night" ? "night" : "day"}`;
+  $("#tSeason").textContent = seasonOf(state.week);
+  $("#week").value = state.week;
+}
+
+function update() { renderMap(); renderPanel(); renderCal(); renderTime(); renderLegend(); }
+
+/* ── Controls ── */
+function bindSeg(id, key, cb) {
+  $$(`#${id} button`).forEach(b => b.addEventListener("click", () => {
+    $$(`#${id} button`).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    const v = b.dataset.v; state[key] = key === "zoom" ? +v : v; if (cb) cb(v); update();
+  }));
+}
+bindSeg("segPhase", "phase");
+bindSeg("segTime", "time");
+bindSeg("segZoom", "zoom", v => setZoom(+v));
+$("#evToggle").addEventListener("change", e => { state.evidence = e.target.checked; update(); });
+$("#week").addEventListener("input", e => { stopPlay(); state.week = +e.target.value; update(); });
+
+let playTimer = 0;
+const playIcon = $("#playIcon");
+function stopPlay() { if (!state.playing) return; state.playing = false; clearInterval(playTimer); playIcon.innerHTML = `<path d="M4 2.5v11l9-5.5z" fill="currentColor"/>`; $("#play").setAttribute("aria-label", "Play through the year"); }
+$("#play").addEventListener("click", () => {
+  if (state.playing) return stopPlay();
+  state.playing = true; playIcon.innerHTML = `<path d="M3.5 2.5h3v11h-3zM9.5 2.5h3v11h-3z" fill="currentColor"/>`; $("#play").setAttribute("aria-label", "Pause");
+  playTimer = setInterval(() => { state.week = state.week % 52 + 1; update(); }, REDUCED ? 600 : 260);
+});
+new IntersectionObserver(e => { if (!e[0].isIntersecting) stopPlay(); }).observe($("#console"));
+
+update();
+applyScale();
+requestAnimationFrame(applyScale);
+
+/* ════════ Waitlist ════════ */
+(() => {
+  const form = $("#wlForm"), err = $("#wlErr");
+  const show = (email, icao) => {
+    const lines = [
+      "AEROBIRD DATALINK", "─────────────────────────", `CLEARANCE ${new Date().toISOString().slice(11, 16).replace(":", "")}Z`,
+      `CLEARED TO JOIN WAITLIST`, `FIELD ${icao || "ANY"}`, `CONTACT ${email.toUpperCase()}`,
+      "WE WILL CALL WHEN YOUR FIELD IS READY", "READBACK NOT REQUIRED", "", "(PREVIEW BUILD · NOTHING WAS SENT)"
+    ].join("\n");
+    form.innerHTML = `<div class="clear" id="clr"></div>`;
+    const el = $("#clr");
+    if (REDUCED) { el.textContent = lines; return; }
+    let i = 0; const t = setInterval(() => { el.textContent = lines.slice(0, ++i); if (i >= lines.length) clearInterval(t); }, 18);
+  };
+  try { const saved = JSON.parse(localStorage.getItem("aerobird-wl") || "null"); if (saved && saved.email) show(saved.email, saved.icao); } catch (e) {}
+  $("#wlIcao")?.addEventListener("input", e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, ""); });
+  form.addEventListener("submit", e => {
+    e.preventDefault();
+    const email = $("#wlEmail").value.trim(), icao = $("#wlIcao").value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { err.textContent = "Enter a work email so we can reach you."; $("#wlEmail").focus(); return; }
+    if (icao && !/^[A-Z]{4}$/.test(icao)) { err.textContent = "ICAO codes are four letters, like LROP."; $("#wlIcao").focus(); return; }
+    try { localStorage.setItem("aerobird-wl", JSON.stringify({ email, icao })); } catch (e2) {}
+    show(email, icao);
+  });
+})();
+})();
+</script>

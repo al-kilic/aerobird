@@ -1,0 +1,1734 @@
+<title>AeroBird Console</title>
+<meta name="description" content="AeroBird demo console: wildlife-strike risk forecasting for one airport, on illustrative data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;800&family=Cormorant+Garamond:ital,wght@1,500;1,600&family=Martian+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@700;800;900&display=swap">
+
+<style>
+/* Layout: night-ops console. Fixed chart-room sidebar, sticky command bar, cards on a dark ground; the briefing renders on paper. */
+:root {
+  color-scheme: dark;
+  --bg:      #05080C;
+  --panel:   #0A1017;
+  --panel-2: #0E1620;
+  --raise:   #141E2A;
+  --ink:     #E5EBF1;
+  --ink-2:   #8E9CAC;
+  --ink-3:   #56636F;
+  --rule:    #1A2531;
+  --rule-2:  #263340;
+  --mag:     #FF3FA4;
+  --cyan:    #46D2F2;
+  --sign:    #F5C518;
+  --sign-ink:#0E0E0C;
+  --r0: #2B6A5E; --r1: #3BB487; --r2: #E7BF3B; --r3: #F47D24; --r4: #F0392C; --rx: #5B6773;
+  --paper: #E7EAE3; --p-ink: #0B0E11; --p-ink-2: #46504A; --p-rule: #B5BEB1; --p-mag: #C0157A;
+
+  --f-display: "Big Shoulders Display", "Big Shoulders", "Barlow Condensed", "Arial Narrow", sans-serif;
+  --f-body:    "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --f-mono:    "Martian Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  --f-serif:   "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --side: 232px;
+  --pad: clamp(16px, 2.2vw, 30px);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--mag); outline-offset: 2px; }
+::selection { background: var(--mag); color: var(--bg); }
+.mono { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; }
+.lat { font-family: var(--f-serif); font-style: italic; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--ink-2); }
+.dim { color: var(--ink-3); }
+
+/* ── Shell ── */
+.app { display: grid; grid-template-columns: var(--side) minmax(0, 1fr); min-height: 100%; }
+.side { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; max-height: 100dvh; overflow-y: auto; border-right: 1px solid var(--rule); background: var(--bg); display: flex; flex-direction: column; padding: 18px 14px 18px; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 9px; text-decoration: none; padding: 2px 6px; }
+.brand svg { width: 26px; height: 26px; flex: none; }
+.brand b { font-family: var(--f-display); font-weight: 900; font-size: 22px; letter-spacing: .05em; text-transform: uppercase; line-height: 1; }
+.brand small { font-family: var(--f-mono); font-size: 8.5px; letter-spacing: .14em; color: var(--sign); display: block; margin-top: 3px; }
+.apt { border: 1px solid var(--rule-2); background: var(--panel); padding: 11px 12px; display: grid; gap: 2px; }
+.apt .code { font-family: var(--f-display); font-weight: 900; font-size: 30px; line-height: .85; display: flex; align-items: baseline; justify-content: space-between; }
+.apt .code span { font-family: var(--f-mono); font-size: 9px; font-weight: 500; color: var(--ink-3); letter-spacing: .12em; }
+.apt .nm { font-size: 13px; color: var(--ink-2); line-height: 1.3; margin-top: 6px; }
+.apt .add { margin-top: 8px; font-family: var(--f-mono); font-size: 9px; letter-spacing: .1em; color: var(--ink-3); text-transform: uppercase; border-top: 1px dashed var(--rule-2); padding-top: 8px; display: flex; justify-content: space-between; }
+.nav { display: grid; gap: 1px; }
+.nav-sec { font-family: var(--f-mono); font-size: 9px; letter-spacing: .16em; color: var(--ink-3); text-transform: uppercase; padding: 10px 8px 6px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 8px 9px; text-decoration: none; font-size: 14px; color: var(--ink-2); border-left: 2px solid transparent; transition: background .2s, color .2s; }
+.nav a svg { width: 16px; height: 16px; flex: none; opacity: .8; }
+.nav a:hover { background: var(--panel); color: var(--ink); }
+.nav a[aria-current="page"] { background: var(--panel-2); color: var(--ink); border-left-color: var(--mag); }
+.nav a[aria-current="page"] svg { color: var(--mag); opacity: 1; }
+.nav a .k { margin-left: auto; font-family: var(--f-mono); font-size: 9px; color: var(--ink-3); }
+.side-foot { margin-top: auto; display: grid; gap: 10px; }
+.proto { display: inline-flex; gap: 7px; align-items: center; font-family: var(--f-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--sign); border: 1px solid color-mix(in srgb, var(--sign) 50%, transparent); padding: 6px 8px; line-height: 1.3; }
+.proto::before { content: ""; width: 6px; height: 6px; flex: none; background: var(--sign); animation: blink 1.6s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+.side-foot .mono { color: var(--ink-3); font-size: 9px; line-height: 1.6; }
+.side-foot a { color: var(--ink-2); }
+
+.main { min-width: 0; display: flex; flex-direction: column; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--rule); padding: 12px var(--pad); display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.bar-title { margin-right: auto; min-width: 0; }
+.bar-title h1 { font-family: var(--f-display); font-weight: 900; font-size: 26px; text-transform: uppercase; letter-spacing: .02em; line-height: 1; margin: 0; }
+.bar-title p { margin: 3px 0 0; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .1em; color: var(--ink-3); text-transform: uppercase; }
+.wk { display: inline-flex; align-items: stretch; border: 1px solid var(--rule-2); background: var(--panel); }
+.wk button { background: none; border: 0; cursor: pointer; padding: 0 10px; color: var(--ink-2); }
+.wk button:hover { color: var(--ink); background: var(--raise); }
+.wk button svg { width: 12px; height: 12px; display: block; }
+.wk .lbl { padding: 6px 12px; border-inline: 1px solid var(--rule-2); text-align: center; min-width: 138px; }
+.wk .lbl b { font-family: var(--f-display); font-weight: 800; font-size: 18px; line-height: 1; display: block; }
+.wk .lbl span { font-family: var(--f-mono); font-size: 9px; color: var(--ink-2); letter-spacing: .06em; }
+.seg { display: inline-flex; border: 1px solid var(--rule-2); background: var(--panel); flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; cursor: pointer; padding: 8px 11px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); transition: color .2s, background .2s; }
+.seg button + button { border-left: 1px solid var(--rule-2); }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg.mag button[aria-pressed="true"] { background: var(--mag); color: var(--bg); }
+.seg.sm button { padding: 6px 9px; font-size: 9.5px; }
+.ctl { display: inline-flex; align-items: center; gap: 8px; }
+.ctl > .mono { color: var(--ink-3); font-size: 9px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--rule-2); background: var(--panel); cursor: pointer; padding: 8px 12px; font-family: var(--f-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink); text-decoration: none; transition: background .2s, border-color .2s; }
+.btn:hover { background: var(--raise); border-color: var(--ink-3); }
+.btn svg { width: 13px; height: 13px; }
+.btn.sign { background: var(--sign); color: var(--sign-ink); border-color: var(--sign); font-weight: 600; }
+.btn.sign:hover { background: #FFD43B; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+.view { padding: var(--pad); display: none; flex-direction: column; gap: 18px; animation: viewIn .45s cubic-bezier(.2,.8,.2,1); }
+.view.on { display: flex; }
+@keyframes viewIn { from { transform: translateY(10px); } to { transform: none; } }
+
+/* ── Cards & grids ── */
+.grid { display: grid; gap: 18px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.span2 { grid-column: span 2; }
+.span3 { grid-column: 1 / -1; }
+.card { background: var(--panel); border: 1px solid var(--rule); padding: 18px; min-width: 0; display: flex; flex-direction: column; gap: 14px; position: relative; }
+.card-h { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: flex-start; justify-content: space-between; }
+.card-h h2, .card-h h3 { font-family: var(--f-display); font-weight: 800; font-size: 21px; text-transform: uppercase; letter-spacing: .02em; line-height: 1; margin: 0; }
+.card-h .q { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--mag); display: block; margin-bottom: 6px; }
+.card-h p { margin: 5px 0 0; font-size: 13px; color: var(--ink-2); }
+.note { font-size: 12.5px; color: var(--ink-2); margin: 0; }
+.note b { color: var(--ink); font-weight: 600; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .09em; padding: 4px 7px; text-transform: uppercase; font-weight: 600; white-space: nowrap; line-height: 1.2; }
+.chip.band { color: var(--bg); }
+.chip.out { border: 1px solid var(--rule-2); color: var(--ink-2); font-weight: 500; }
+.chip.grade { border: 1px solid var(--ink-3); color: var(--ink); }
+.chip.x { background: repeating-linear-gradient(45deg, var(--rx) 0 3px, transparent 3px 6px); border: 1px solid var(--rx); color: var(--ink); }
+.chip.sev0 { border: 1px solid var(--rule-2); color: var(--ink-2); }
+.chip.sev1 { border: 1px solid var(--ink-3); color: var(--ink); }
+.chip.sev2 { background: var(--raise); color: var(--ink); border: 1px solid var(--ink-2); }
+.chip.sev3 { background: var(--ink); color: var(--bg); }
+
+/* KPI tiles */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.kpi { background: var(--panel); border: 1px solid var(--rule); padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; min-width: 0; position: relative; overflow: hidden; }
+.kpi::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--kc, var(--rule-2)); transition: background .4s; }
+.kpi .t { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+.kpi .v { font-family: var(--f-display); font-weight: 900; font-size: 54px; line-height: .82; font-variant-numeric: tabular-nums; transition: color .4s; }
+.kpi .v.txt { font-size: 34px; line-height: .95; text-transform: uppercase; }
+.kpi .s { font-size: 13px; color: var(--ink-2); line-height: 1.4; }
+.kpi .s b { color: var(--ink); font-weight: 600; }
+.kpi .row { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.delta { font-family: var(--f-mono); font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.delta.up { color: var(--r3); } .delta.dn { color: var(--r1); }
+.inl { width: 7ch; background: transparent; border: 0; border-bottom: 1px dashed var(--ink-3); color: var(--ink); font-family: var(--f-mono); font-size: 12px; padding: 1px 2px; text-align: right; font-variant-numeric: tabular-nums; }
+.inl:focus { outline: none; border-bottom-color: var(--sign); }
+.ex { font-family: var(--f-mono); font-size: 8.5px; letter-spacing: .1em; color: var(--sign); text-transform: uppercase; }
+
+/* matrix */
+.mx { display: grid; grid-template-columns: 78px repeat(4, minmax(0, 1fr)); gap: 3px; }
+.mx .h { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .08em; color: var(--ink-2); text-transform: uppercase; text-align: center; padding: 4px 0; }
+.mx .h small { display: block; color: var(--ink-3); font-size: 8.5px; letter-spacing: .04em; }
+.mx .rl { font-family: var(--f-mono); font-size: 10px; color: var(--ink-2); display: flex; align-items: center; }
+.mx button { border: 0; cursor: pointer; height: 48px; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 20px; color: var(--bg); font-variant-numeric: tabular-nums; position: relative; transition: background-color .4s, transform .15s; }
+.mx button:hover { transform: scale(1.04); z-index: 1; }
+.mx button.lo { color: var(--ink); }
+.mx button.x { background: repeating-linear-gradient(45deg, var(--rx) 0 3px, var(--panel-2) 3px 7px) !important; color: var(--ink-2); font-size: 11px; font-family: var(--f-mono); }
+.mx button.sel { outline: 2px solid var(--ink); outline-offset: 2px; z-index: 2; }
+.mx button.peak::after { content: "PEAK"; position: absolute; top: 3px; right: 4px; font-family: var(--f-mono); font-size: 7.5px; letter-spacing: .1em; color: inherit; opacity: .85; font-weight: 600; }
+
+/* ring list */
+.rlist { display: grid; }
+.rrow { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 9px 4px; border-top: 1px solid var(--rule); cursor: pointer; background: none; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; width: 100%; transition: background .2s; }
+.rrow:hover { background: var(--panel-2); }
+.rrow.on { background: var(--panel-2); box-shadow: inset 2px 0 0 var(--mag); }
+.rrow .rn { font-family: var(--f-mono); font-size: 10.5px; color: var(--ink-2); }
+.rrow .bar { height: 6px; background: var(--rule); position: relative; }
+.rrow .bar i { position: absolute; inset: 0 auto 0 0; transition: width .5s cubic-bezier(.2,.8,.2,1), background .4s; }
+.rrow .rv { font-family: var(--f-display); font-weight: 800; font-size: 19px; font-variant-numeric: tabular-nums; min-width: 3.4ch; text-align: right; }
+
+/* species rows */
+.sprow { display: grid; grid-template-columns: 30px minmax(0, 1fr) 70px 46px; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--rule); }
+.sprow .mass { display: grid; place-items: center; }
+.sprow .mass i { display: block; border-radius: 50%; background: var(--ink-2); }
+.spn b { display: block; font-weight: 600; font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spn i { display: block; font-family: var(--f-serif); font-style: italic; font-size: 14px; color: var(--ink-2); line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spn.radar b { color: var(--cyan); }
+.share { font-family: var(--f-mono); font-size: 10px; font-variant-numeric: tabular-nums; }
+.share .bar { display: block; height: 4px; background: var(--rule); margin-bottom: 4px; }
+.share .bar i { display: block; height: 100%; background: var(--ink); transition: width .6s cubic-bezier(.2,.8,.2,1); }
+.trend { font-family: var(--f-mono); font-size: 10px; text-align: right; font-variant-numeric: tabular-nums; }
+.trend.up { color: var(--r3); } .trend.dn { color: var(--r1); } .trend.fl { color: var(--ink-3); }
+
+/* focus items */
+.focus { display: grid; gap: 0; }
+.fitem { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 14px; padding: 13px 0; border-top: 1px solid var(--rule); }
+.fitem .who { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--sign); padding-top: 3px; }
+.fitem p { margin: 0; font-size: 14.5px; }
+.fitem p b { font-weight: 600; }
+.fitem p small { display: block; color: var(--ink-2); font-size: 12.5px; margin-top: 3px; }
+
+/* windows list */
+.wins { display: grid; }
+.win { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--rule); cursor: pointer; background: none; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; width: 100%; }
+.win:hover { background: var(--panel-2); }
+.win .wd { font-family: var(--f-display); font-weight: 800; font-size: 18px; line-height: 1; }
+.win .wd small { display: block; font-family: var(--f-mono); font-size: 9px; color: var(--ink-3); font-weight: 400; margin-top: 3px; letter-spacing: .05em; }
+.win .wt { font-size: 14px; }
+.win .wt span { display: block; color: var(--ink-2); font-size: 12.5px; }
+.win .wp { font-family: var(--f-mono); font-size: 10.5px; color: var(--r3); }
+
+/* chart svg defaults */
+svg.ch { width: 100%; height: auto; display: block; overflow: visible; }
+.axis text, text.ax { font-family: var(--f-mono); font-size: 9px; fill: var(--ink-3); }
+.ab-chart { width: 100%; height: auto; aspect-ratio: 1 / 1; display: block; max-width: 100%; touch-action: manipulation; }
+.ab-chart .ring { cursor: pointer; transition: fill .45s ease, fill-opacity .3s ease; }
+.ab-chart .ring:hover { fill-opacity: .66; }
+.ab-chart .ring:focus-visible { outline: none; stroke: var(--sign); stroke-width: 2; }
+.ab-chart .flow { fill: none; stroke: var(--mag); stroke-dasharray: 6 7; animation: flow 1s linear infinite; transition: opacity .4s; }
+@keyframes flow { to { stroke-dashoffset: -26; } }
+.ab-chart .lbl { font-family: var(--f-mono); fill: var(--ink-2); letter-spacing: .06em; pointer-events: none; }
+.ab-chart .lbl.hi { fill: var(--ink); }
+.ab-chart .lbl.mag { fill: var(--mag); }
+.ab-chart .lbl.cy { fill: var(--cyan); }
+.ab-chart .dot { transition: opacity .5s ease; pointer-events: none; }
+.ab-chart .sel-ring { fill: none; stroke: var(--ink); stroke-dasharray: 3 5; animation: flow 1.6s linear infinite; pointer-events: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.legend span { display: inline-flex; gap: 6px; align-items: center; font-family: var(--f-mono); font-size: 9px; letter-spacing: .05em; color: var(--ink-2); text-transform: uppercase; }
+.legend i { width: 14px; height: 9px; display: inline-block; }
+.legend i.x { background: repeating-linear-gradient(45deg, var(--rx) 0 2px, transparent 2px 5px); border: 1px solid var(--rx); }
+.legend i.dt { width: 6px; height: 6px; border-radius: 50%; }
+
+/* map view */
+.map-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); gap: 18px; align-items: start; }
+.p-num { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.p-num .v { font-family: var(--f-display); font-weight: 900; font-size: 76px; line-height: .8; font-variant-numeric: tabular-nums; transition: color .4s; }
+.p-num .u { font-family: var(--f-mono); font-size: 10px; letter-spacing: .05em; color: var(--ink-2); max-width: 19ch; line-height: 1.5; text-transform: uppercase; }
+.p-num.unknown .v { font-size: 40px; color: var(--ink-2); background: repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in srgb, var(--rx) 40%, transparent) 6px 8px); padding: 8px 10px 4px; }
+.ci-axis { position: relative; height: 26px; }
+.ci-bands { position: absolute; left: 0; right: 0; top: 10px; height: 6px; display: flex; }
+.ci-bands i { opacity: .35; }
+.ci-range { position: absolute; top: 6px; height: 14px; border: 1.5px solid var(--ink); transition: left .45s ease, width .45s ease; }
+.ci-pt { position: absolute; top: 2px; width: 2px; height: 22px; background: var(--ink); margin-left: -1px; transition: left .45s ease; }
+.ci-ticks { display: flex; justify-content: space-between; font-family: var(--f-mono); font-size: 9px; color: var(--ink-3); margin-top: 4px; }
+.ci-txt { font-family: var(--f-mono); font-size: 10px; color: var(--ink-2); margin-top: 6px; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.split > div { border-top: 1px solid var(--rule); padding-top: 8px; }
+.split .k { font-family: var(--f-mono); font-size: 9px; letter-spacing: .12em; color: var(--ink-3); text-transform: uppercase; }
+.split .n { font-family: var(--f-display); font-weight: 800; font-size: 26px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.split .bar { height: 3px; background: var(--rule); margin-top: 6px; }
+.split .bar i { display: block; height: 100%; background: var(--mag); transition: width .5s ease; }
+.sub-h { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); margin: 0; font-weight: 500; display: flex; justify-content: space-between; gap: 10px; }
+.sub-h b { color: var(--ink-2); font-weight: 500; }
+.ev { display: grid; gap: 7px; }
+.ev-row { display: grid; grid-template-columns: minmax(0, 1fr) 54px; gap: 10px; align-items: center; font-size: 13px; color: var(--ink-2); }
+.ev-row .bar { grid-column: 1 / -1; height: 3px; background: var(--rule); }
+.ev-row .bar i { display: block; height: 100%; transition: width .5s ease; }
+.ev-row .n { font-family: var(--f-mono); font-size: 10.5px; text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+.ev-note b { color: var(--sign); font-weight: 600; }
+
+/* calendar */
+.cal-wrap { overflow-x: auto; padding-bottom: 4px; }
+.cal { display: grid; grid-template-columns: 84px repeat(52, minmax(12px, 1fr)); gap: 2px; min-width: 760px; }
+.cal .mo { font-family: var(--f-mono); font-size: 9px; color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; height: 16px; white-space: nowrap; }
+.cal .rl { font-family: var(--f-mono); font-size: 9.5px; color: var(--ink-2); display: flex; align-items: center; white-space: nowrap; cursor: pointer; }
+.cal .rl.on { color: var(--ink); }
+.cal .rl.on::before { content: ""; width: 6px; height: 6px; background: var(--mag); margin-right: 6px; flex: none; }
+.cal .rl.apt { color: var(--sign); }
+.cal .c { height: 26px; border: 0; padding: 0; cursor: pointer; transition: background-color .4s ease, transform .15s; }
+.cal .c:hover { transform: scaleY(1.2); }
+.cal .c.x { background: repeating-linear-gradient(45deg, var(--rx) 0 2px, transparent 2px 4px) !important; }
+.cal .c.wk { box-shadow: inset 0 -3px 0 var(--mag); }
+.cal .c.sel { outline: 2px solid var(--ink); outline-offset: 1px; position: relative; z-index: 1; }
+.cal .gap { height: 6px; grid-column: 1 / -1; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; }
+table.tbl { width: 100%; border-collapse: collapse; min-width: 760px; font-variant-numeric: tabular-nums; }
+.tbl th { text-align: left; font-family: var(--f-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; padding: 8px 10px; border-bottom: 1px solid var(--rule-2); white-space: nowrap; }
+.tbl th button { background: none; border: 0; padding: 0; cursor: pointer; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; display: inline-flex; gap: 4px; align-items: center; }
+.tbl th button:hover, .tbl th button.on { color: var(--ink); }
+.tbl td { padding: 9px 10px; border-bottom: 1px solid var(--rule); font-size: 13.5px; vertical-align: middle; }
+.tbl tbody tr { cursor: pointer; transition: background .2s; }
+.tbl tbody tr:hover { background: var(--panel-2); }
+.tbl tbody tr.on { background: var(--raise); }
+.tbl td.r { text-align: right; }
+.tbl td.m { font-family: var(--f-mono); font-size: 11px; }
+.tbl .spn b { font-size: 14px; }
+.tools { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.search { background: var(--panel-2); border: 1px solid var(--rule-2); padding: 8px 11px; min-width: 220px; color: var(--ink); font-size: 14px; }
+.search::placeholder { color: var(--ink-3); }
+.search:focus { outline: none; border-color: var(--ink-3); }
+select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); padding: 7px 9px; color: var(--ink); font-size: 13px; }
+
+/* drawer */
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100%); background: var(--panel); border-left: 1px solid var(--rule-2); z-index: 60; transform: translateX(102%); transition: transform .45s cubic-bezier(.2,.8,.2,1); overflow-y: auto; padding: calc(22px + env(safe-area-inset-top, 0px)) 24px calc(30px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 18px; box-shadow: -30px 0 60px -30px #000; }
+.drawer.on { transform: none; }
+.scrim { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 55%, transparent); z-index: 55; opacity: 0; pointer-events: none; transition: opacity .35s; }
+.scrim.on { opacity: 1; pointer-events: auto; }
+.dr-close { position: absolute; top: calc(16px + env(safe-area-inset-top, 0px)); right: 16px; }
+.dr-name { font-family: var(--f-display); font-weight: 900; font-size: 40px; line-height: .9; text-transform: uppercase; margin: 6px 0 0; padding-right: 60px; }
+.dr-lat { font-family: var(--f-serif); font-style: italic; font-size: 22px; color: var(--ink-2); margin: 4px 0 0; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
+.facts div { border-top: 1px solid var(--rule); padding-top: 8px; }
+.facts .k { font-family: var(--f-mono); font-size: 9px; letter-spacing: .1em; color: var(--ink-3); text-transform: uppercase; display: block; }
+.facts .n { font-family: var(--f-display); font-weight: 800; font-size: 24px; line-height: 1.1; }
+
+/* log */
+.lg-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.addrow { display: grid; grid-template-columns: 90px 80px minmax(0, 1.4fr) minmax(0, 1.2fr) 70px minmax(0, 1.2fr) auto; gap: 8px; align-items: end; }
+.addrow label { display: grid; gap: 4px; font-family: var(--f-mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.addrow input, .addrow select { background: var(--panel-2); border: 1px solid var(--rule-2); padding: 7px 8px; color: var(--ink); font-size: 13px; width: 100%; }
+.act { font-family: var(--f-mono); font-size: 10px; letter-spacing: .04em; white-space: nowrap; }
+.act.d { color: var(--sign); } .act.a { color: var(--r3); } .act.m { color: var(--ink-2); }
+.new-row td { animation: flash 1.6s ease; }
+@keyframes flash { 0%, 40% { background: color-mix(in srgb, var(--sign) 22%, transparent); } }
+
+/* evidence */
+.src { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.src .card { gap: 10px; }
+.src h3 { font-family: var(--f-display); font-weight: 800; font-size: 20px; text-transform: uppercase; margin: 0; line-height: 1; }
+.src p { margin: 0; font-size: 13px; color: var(--ink-2); }
+.src .meta { font-family: var(--f-mono); font-size: 9.5px; color: var(--ink-3); letter-spacing: .05em; line-height: 1.7; }
+.src .meta b { color: var(--ink); font-weight: 500; }
+.gg { display: grid; grid-template-columns: 78px repeat(5, minmax(0, 1fr)); gap: 3px; }
+.gg .h { font-family: var(--f-mono); font-size: 9px; letter-spacing: .08em; color: var(--ink-2); text-transform: uppercase; text-align: center; padding: 4px 0; }
+.gg .rl { font-family: var(--f-mono); font-size: 10px; color: var(--ink-2); display: flex; align-items: center; }
+.gg .g { height: 40px; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 20px; }
+.gg .g.A { background: color-mix(in srgb, var(--ink) 16%, transparent); }
+.gg .g.B { background: color-mix(in srgb, var(--ink) 9%, transparent); }
+.gg .g.C { background: color-mix(in srgb, var(--ink) 4%, transparent); color: var(--ink-2); }
+.gg .g.X { background: repeating-linear-gradient(45deg, var(--rx) 0 3px, transparent 3px 7px); font-family: var(--f-mono); font-size: 9px; color: var(--ink-2); font-weight: 500; }
+.status { display: inline-flex; gap: 6px; align-items: center; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status.ok { color: var(--r1); } .status.warn { color: var(--sign); } .status.off { color: var(--r3); } .status.pend { color: var(--ink-2); }
+.gate { border: 1px dashed var(--sign); padding: 14px 16px; display: grid; gap: 6px; }
+.gate b { font-family: var(--f-display); font-weight: 800; font-size: 19px; text-transform: uppercase; }
+
+/* briefing paper */
+.paper { background: var(--paper); color: var(--p-ink); max-width: 860px; width: 100%; margin-inline: auto; padding: clamp(22px, 4vw, 54px); box-shadow: 0 40px 80px -40px #000; position: relative; }
+.paper::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: repeating-linear-gradient(90deg, var(--p-ink) 0 24px, var(--sign) 24px 48px); }
+.pp-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 30px; border-bottom: 2px solid var(--p-ink); padding-bottom: 16px; }
+.pp-head .k { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--p-mag); }
+.pp-head h2 { font-family: var(--f-display); font-weight: 900; font-size: clamp(34px, 5vw, 52px); line-height: .88; text-transform: uppercase; margin: 6px 0 0; }
+.pp-meta { font-family: var(--f-mono); font-size: 9.5px; line-height: 1.8; text-align: right; color: var(--p-ink-2); text-transform: uppercase; letter-spacing: .05em; }
+.pp-meta b { color: var(--p-ink); font-weight: 600; }
+.pp-sec { padding-top: 20px; display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 24px; }
+.pp-sec h3 { font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; margin: 3px 0 0; color: var(--p-ink-2); font-weight: 500; }
+.pp-sec p { margin: 0 0 8px; font-size: 15px; line-height: 1.55; }
+.pp-sec .lead { font-size: 18px; line-height: 1.45; }
+.pp-tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13.5px; }
+.pp-tbl th { text-align: left; font-family: var(--f-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--p-ink-2); font-weight: 500; border-bottom: 1px solid var(--p-ink); padding: 6px 8px 6px 0; }
+.pp-tbl td { border-bottom: 1px solid var(--p-rule); padding: 7px 8px 7px 0; }
+.pp-tbl .sw { display: inline-block; width: 10px; height: 10px; margin-right: 6px; vertical-align: -1px; }
+.pp-tbl .lat { color: var(--p-ink-2); }
+.pp-foot { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--p-rule); font-family: var(--f-mono); font-size: 9px; color: var(--p-ink-2); letter-spacing: .05em; line-height: 1.7; text-transform: uppercase; }
+.pp-tools { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; align-items: center; }
+
+/* tooltip */
+#tip { position: fixed; z-index: 90; pointer-events: none; background: var(--ink); color: var(--bg); padding: 7px 9px; font-size: 12px; line-height: 1.4; max-width: 260px; opacity: 0; transform: translateY(4px); transition: opacity .15s, transform .15s; }
+#tip.on { opacity: 1; transform: none; }
+#tip b { font-weight: 600; }
+#tip .mono { font-size: 9px; }
+
+/* responsive */
+@media (max-width: 1240px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .src { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1080px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .span2 { grid-column: auto; }
+  .map-grid, .lg-grid { grid-template-columns: minmax(0, 1fr); }
+  .addrow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .side { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--rule); flex-direction: row; flex-wrap: wrap; align-items: center; padding: 12px var(--pad); gap: 12px; }
+  .apt, .side-foot, .nav-sec { display: none; }
+  .nav { display: flex; overflow-x: auto; gap: 2px; width: 100%; padding-bottom: 2px; }
+  .nav a { white-space: nowrap; border-left: 0; border-bottom: 2px solid transparent; padding: 7px 9px; font-size: 13px; }
+  .nav a[aria-current="page"] { border-bottom-color: var(--mag); }
+  .nav a .k { display: none; }
+  .pp-sec { grid-template-columns: minmax(0, 1fr); }
+  .pp-head { grid-template-columns: minmax(0, 1fr); }
+  .pp-meta { text-align: left; }
+}
+@media (max-width: 560px) {
+  .kpis, .src { grid-template-columns: minmax(0, 1fr); }
+  .kpi .v { font-size: 46px; }
+  .fitem { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mx { grid-template-columns: 58px repeat(4, minmax(0, 1fr)); }
+  .mx button { font-size: 16px; height: 42px; }
+  .addrow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bar-title h1 { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
+}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <a class="brand" id="brandLink" href="index.html" data-artifact-href="https://claude.ai/artifact/Ez8FNH886SSLqWda7GyHsm" aria-label="AeroBird site">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="1.6" stroke-dasharray="64 24" transform="rotate(-30 16 16)"/>
+        <circle cx="16" cy="16" r="8.5" stroke="currentColor" stroke-width="1.6" opacity=".55"/>
+        <path d="M7 19.5 L14 14 L16.2 16.4 L18.4 14 L25.5 19.5" stroke="#FF3FA4" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+      </svg>
+      <div><b>AeroBird</b><small>Console · Demo</small></div>
+    </a>
+    <div class="apt">
+      <div class="code">LROP <span>OTP</span></div>
+      <div class="nm">Bucharest Henri Coandă<br><span class="dim">Elev 314 ft · RWY 08L/26R · 08R/26L</span></div>
+      <div class="add"><span>1 of 1 airports</span><span>+ Add</span></div>
+    </div>
+    <nav class="nav" aria-label="Console">
+      <div class="nav-sec">Brief</div>
+      <a href="#overview" data-v="overview"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="1.5" width="5.5" height="5.5"/><rect x="9" y="1.5" width="5.5" height="5.5"/><rect x="1.5" y="9" width="5.5" height="5.5"/><rect x="9" y="9" width="5.5" height="5.5"/></svg>Overview<span class="k">1</span></a>
+      <a href="#briefing" data-v="briefing"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 1.5h7l3 3v10H3z"/><path d="M5.5 7h5M5.5 9.5h5M5.5 12h3"/></svg>Briefing<span class="k">2</span></a>
+      <div class="nav-sec">Analyse</div>
+      <a href="#map" data-v="map"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.5"/><circle cx="8" cy="8" r="3.5"/><path d="M1 9.2 15 6.8"/></svg>Risk map<span class="k">3</span></a>
+      <a href="#outlook" data-v="outlook"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="12"/><path d="M1.5 6h13M5 1v3M11 1v3"/><path d="M4 9h2M7 9h2M10 9h2M4 12h2M7 12h2"/></svg>Outlook<span class="k">4</span></a>
+      <a href="#species" data-v="species"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 10.5 6 6.5l2 2 2-2 4.5 4"/><circle cx="8" cy="4" r="1"/></svg>Species<span class="k">5</span></a>
+      <a href="#altitude" data-v="altitude"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 14V2M2 14h12"/><path d="M4.5 11.5h3M4.5 9h6M4.5 6.5h8M4.5 4h4"/></svg>Altitude<span class="k">6</span></a>
+      <div class="nav-sec">Operate</div>
+      <a href="#log" data-v="log"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2.5" y="2.5" width="11" height="12"/><path d="M5.5 1.5h5v2.5h-5zM5 7.5l1.5 1.5L9 6.5M5 11.5h6"/></svg>Airside log<span class="k">7</span></a>
+      <a href="#evidence" data-v="evidence"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1.5 14.5 5 8 8.5 1.5 5z"/><path d="M1.5 8 8 11.5 14.5 8M1.5 11 8 14.5 14.5 11"/></svg>Evidence<span class="k">8</span></a>
+    </nav>
+    <div class="side-foot">
+      <span class="proto">Prototype · illustrative data · not a forecast</span>
+      <div class="mono">Model v0.1 · climatology<br>κ uncalibrated · validation not run<br><a href="index.html" id="siteLink" data-artifact-href="https://claude.ai/artifact/Ez8FNH886SSLqWda7GyHsm">AeroBird site ↗</a></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="bar">
+      <div class="bar-title"><h1 id="vTitle">Overview</h1><p id="vSub">LROP · Week 40</p></div>
+      <div class="wk" role="group" aria-label="Week">
+        <button type="button" id="wkPrev" aria-label="Previous week"><svg viewBox="0 0 12 12" fill="none"><path d="M7.5 2 3.5 6l4 4" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <div class="lbl"><b id="wkLbl">W40</b><span id="wkDates"></span></div>
+        <button type="button" id="wkNext" aria-label="Next week"><svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2 8.5 6l-4 4" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      </div>
+      <div class="ctl"><span class="mono">Phase</span>
+        <div class="seg mag" id="gPhase" role="group" aria-label="Phase of flight">
+          <button type="button" data-v="arr">Arrivals</button><button type="button" data-v="dep">Departures</button><button type="button" data-v="comb">All</button><button type="button" data-v="haz">Birds only</button>
+        </div>
+      </div>
+      <div class="ctl"><span class="mono">Time</span>
+        <div class="seg" id="gTod" role="group" aria-label="Time of day">
+          <button type="button" data-v="all">24 h</button><button type="button" data-v="dawn">Dawn</button><button type="button" data-v="day">Day</button><button type="button" data-v="dusk">Dusk</button><button type="button" data-v="night">Night</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- OVERVIEW -->
+    <section class="view" id="v-overview" data-title="Overview">
+      <div class="kpis">
+        <div class="kpi" id="k1"></div>
+        <div class="kpi" id="k2"></div>
+        <div class="kpi" id="k3"></div>
+        <div class="kpi" id="k4"></div>
+      </div>
+      <div class="grid">
+        <section class="card span2">
+          <div class="card-h"><div><span class="q">When is it worst?</span><h2>Ring × time of day</h2><p id="mxSub"></p></div><div class="legend" id="mxLegend"></div></div>
+          <div class="mx" id="mx"></div>
+          <div class="sub-h" style="margin-top:6px"><span>Activity through the day</span><b id="hrSub"></b></div>
+          <svg class="ch" id="hrChart" viewBox="0 0 640 150"></svg>
+        </section>
+        <section class="card">
+          <div class="card-h"><div><span class="q">Where is it?</span><h2>Risk rings</h2><p>Click a ring for detail.</p></div><a class="btn" href="#map">Map ↗</a></div>
+          <svg class="ab-chart" id="miniChart" viewBox="0 0 600 600" role="img" aria-label="LROP risk rings"></svg>
+          <div class="rlist" id="rlist"></div>
+        </section>
+      </div>
+      <div class="grid">
+        <section class="card span2">
+          <div class="card-h"><div><span class="q">What’s coming?</span><h2>Next 16 weeks</h2><p id="ahSub"></p></div><a class="btn" href="#outlook">Outlook ↗</a></div>
+          <svg class="ch" id="ahChart" viewBox="0 0 640 190"></svg>
+          <div class="wins" id="ovWins"></div>
+        </section>
+        <section class="card">
+          <div class="card-h"><div><span class="q">Which birds?</span><h2>Top hazards</h2><p id="tbSub"></p></div><a class="btn" href="#species">All ↗</a></div>
+          <div id="topBirds"></div>
+        </section>
+      </div>
+      <div class="grid">
+        <section class="card span2">
+          <div class="card-h"><div><span class="q">What should we do?</span><h2>Suggested focus</h2><p>Generated from the model for this week. Review before use.</p></div><a class="btn" href="#briefing">Briefing ↗</a></div>
+          <div class="focus" id="focus"></div>
+        </section>
+        <section class="card">
+          <div class="card-h"><div><span class="q">What changed?</span><h2>Since last week</h2><p id="chSub"></p></div></div>
+          <div id="changed"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- MAP -->
+    <section class="view" id="v-map" data-title="Risk map">
+      <div class="map-grid">
+        <section class="card">
+          <div class="card-h">
+            <div><span class="q">Where is it?</span><h2>Risk rings to 30 NM</h2></div>
+            <div class="tools">
+              <div class="seg sm" id="mRwy" role="group" aria-label="Runway in use"><button type="button" data-v="08">RWY 08</button><button type="button" data-v="26">RWY 26</button></div>
+              <div class="seg sm" id="mZoom" role="group" aria-label="Range"><button type="button" data-v="30">30 NM</button><button type="button" data-v="12">12 NM</button></div>
+              <label class="mono" style="display:inline-flex;gap:6px;align-items:center;color:var(--ink-2);cursor:pointer"><input type="checkbox" id="mEv" checked style="accent-color:var(--sign)"> Evidence</label>
+            </div>
+          </div>
+          <svg class="ab-chart" id="mapChart" viewBox="0 0 600 600" role="img" aria-label="Chart of LROP with four risk rings"></svg>
+          <div style="display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center"><div class="legend" id="mapLegend"></div><span class="mono dim" style="font-size:8.5px">Schematic geography · not for navigation</span></div>
+        </section>
+        <aside class="card" id="ringPanel" aria-live="polite">
+          <div style="display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center">
+            <div id="rpZone" style="font-family:var(--f-display);font-weight:800;font-size:26px;text-transform:uppercase;margin-right:auto;line-height:1"></div>
+            <span class="chip band" id="rpBand"></span><span class="chip grade" id="rpGrade"></span>
+          </div>
+          <div>
+            <div class="p-num" id="rpNum"><span class="v" id="rpVal">0.00</span><span class="u" id="rpUnit"></span></div>
+            <div id="rpCi" style="margin-top:10px">
+              <div class="ci-axis"><div class="ci-bands" id="ciBands"></div><div class="ci-range" id="ciRange"></div><div class="ci-pt" id="ciPt"></div></div>
+              <div class="ci-ticks"><span>0.01</span><span>0.1</span><span>1</span><span>10</span></div>
+              <div class="ci-txt" id="ciTxt"></div>
+            </div>
+          </div>
+          <div class="split">
+            <div><span class="k">Arrival</span><div class="n" id="rpArr">0</div><div class="bar"><i id="rpArrB"></i></div></div>
+            <div><span class="k">Departure</span><div class="n" id="rpDep">0</div><div class="bar"><i id="rpDepB"></i></div></div>
+          </div>
+          <div style="display:grid;gap:8px"><p class="sub-h"><span>What’s driving it</span><b id="rpCount"></b></p><div id="rpSp"></div><p class="note" id="rpDriver"></p></div>
+          <div style="display:grid;gap:8px"><p class="sub-h"><span>Evidence this week</span></p><div class="ev" id="rpEv"></div><p class="note ev-note" id="rpEvNote"></p></div>
+        </aside>
+      </div>
+      <section class="card">
+        <div class="card-h"><div><span class="q">Along the centreline</span><h2 id="corrTitle"></h2><p id="corrSub"></p></div><div class="legend"><span><i style="background:var(--r3)"></i>Risk along path</span><span><i style="background:var(--rule-2)"></i>Birds present</span><span><i style="background:var(--mag);height:2px"></i>Aircraft altitude</span></div></div>
+        <svg class="ch" id="corrChart" viewBox="0 0 760 230"></svg>
+        <p class="note" id="corrNote"></p>
+      </section>
+    </section>
+
+    <!-- OUTLOOK -->
+    <section class="view" id="v-outlook" data-title="Outlook">
+      <section class="card">
+        <div class="card-h"><div><span class="q">What’s coming?</span><h2>52-week risk calendar</h2><p id="calSub"></p></div><div class="legend" id="calLegend"></div></div>
+        <div class="cal-wrap"><div class="cal" id="cal"></div></div>
+      </section>
+      <div class="grid">
+        <section class="card span2">
+          <div class="card-h"><div><span class="q">Why that week?</span><h2>What drives each week</h2><p id="stSub"></p></div><div class="seg sm" id="stRing" role="group" aria-label="Ring"></div></div>
+          <svg class="ch" id="stChart" viewBox="0 0 760 260"></svg>
+          <div class="legend" id="stLegend"></div>
+        </section>
+        <section class="card">
+          <div class="card-h"><div><span class="q">Plan ahead</span><h2>Key windows</h2><p id="kwSub"></p></div></div>
+          <div class="wins" id="kwList"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- SPECIES -->
+    <section class="view" id="v-species" data-title="Species">
+      <section class="card">
+        <div class="card-h"><div><span class="q">Which birds?</span><h2>Species register · LROP</h2><p id="spSub"></p></div>
+          <div class="tools">
+            <label for="spQ" class="mono" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Search species</label>
+            <input class="search" id="spQ" type="search" placeholder="Search common or scientific name">
+            <div class="seg sm" id="spF" role="group" aria-label="Size class"><button type="button" data-v="all">All</button><button type="button" data-v="3">Very large</button><button type="button" data-v="2">Large</button><button type="button" data-v="1">Medium</button><button type="button" data-v="0">Small</button></div>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table class="tbl" id="spTbl"><thead></thead><tbody></tbody></table></div>
+        <p class="note">Size classes come from mean body mass: small under 100 g, medium under 500 g, large under 1.8 kg, very large above. Severity in the model is fitted to strike outcomes by mass, not assigned by class.</p>
+      </section>
+    </section>
+
+    <!-- ALTITUDE -->
+    <section class="view" id="v-altitude" data-title="Altitude">
+      <section class="card">
+        <div class="card-h"><div><span class="q">How high are they?</span><h2>Radar altitude profile through the year</h2><p id="rgSub"></p></div><div class="legend" id="rgLegend"></div></div>
+        <svg class="ch" id="rgChart" viewBox="0 0 760 280"></svg>
+      </section>
+      <div class="grid">
+        <section class="card">
+          <div class="card-h"><div><span class="q">This week</span><h2>Profile vs aircraft</h2><p id="pfSub"></p></div></div>
+          <svg class="ch" id="pfChart" viewBox="0 0 320 240"></svg>
+        </section>
+        <section class="card span2">
+          <div class="card-h"><div><span class="q">Where does the aircraft meet the birds?</span><h2>Overlap by ring</h2><p>Share of radar-detected birds inside the altitude band an aircraft occupies in each ring.</p></div></div>
+          <div class="tbl-wrap"><table class="tbl" id="ovTbl" style="min-width:560px"><thead><tr><th>Ring</th><th>Arrival band</th><th class="r">Birds in band</th><th>Departure band</th><th class="r">Birds in band</th></tr></thead><tbody></tbody></table></div>
+          <p class="note">Weather radar sees birds as biomass, not species. It is most reliable above roughly 200 m; the lowest bins mix birds with ground clutter and are shown hatched. Low-level resident birds are carried by checklists and airside logs instead.</p>
+        </section>
+      </div>
+    </section>
+
+    <!-- LOG -->
+    <section class="view" id="v-log" data-title="Airside log">
+      <div class="kpis" id="lgK"></div>
+      <div class="lg-grid">
+        <section class="card">
+          <div class="card-h"><div><span class="q">When does the team see them?</span><h2>Entries by hour</h2><p id="lhSub"></p></div></div>
+          <svg class="ch" id="lhChart" viewBox="0 0 520 190"></svg>
+        </section>
+        <section class="card">
+          <div class="card-h"><div><span class="q">Where?</span><h2>Airside schematic</h2><p>Circle size shows birds logged this week by area.</p></div></div>
+          <svg class="ch" id="asChart" viewBox="0 0 600 270"></svg>
+        </section>
+      </div>
+      <section class="card">
+        <div class="card-h"><div><span class="q">The inner ring’s best data</span><h2>Log entries</h2><p id="lgSub"></p></div>
+          <div class="tools">
+            <select class="sel" id="lgSp" aria-label="Filter species"></select>
+            <select class="sel" id="lgAct" aria-label="Filter action"></select>
+            <button class="btn sign" type="button" id="lgAddBtn">+ Log a sighting</button>
+          </div>
+        </div>
+        <form class="addrow" id="lgForm" hidden>
+          <label for="fDay">Day<select id="fDay"></select></label>
+          <label for="fTime">Time<input id="fTime" type="time" value="07:15" required></label>
+          <label for="fArea">Area<select id="fArea"></select></label>
+          <label for="fSp">Species<select id="fSp"></select></label>
+          <label for="fCount">Count<input id="fCount" type="number" min="1" max="5000" value="12" required></label>
+          <label for="fAct">Action<select id="fAct"></select></label>
+          <button class="btn sign" type="submit">Add</button>
+        </form>
+        <div class="tbl-wrap"><table class="tbl" id="lgTbl"><thead><tr><th>Day</th><th>Time</th><th>Area</th><th>Species</th><th class="r">Count</th><th>Action</th><th>Patrol</th></tr></thead><tbody></tbody></table></div>
+      </section>
+    </section>
+
+    <!-- EVIDENCE -->
+    <section class="view" id="v-evidence" data-title="Evidence">
+      <div class="src" id="srcCards"></div>
+      <div class="grid">
+        <section class="card span2">
+          <div class="card-h"><div><span class="q">Can I trust it?</span><h2>Data grade by ring and time</h2><p id="ggSub"></p></div></div>
+          <div class="gg" id="gg"></div>
+          <div class="tbl-wrap"><table class="tbl" id="cvTbl" style="min-width:520px"><thead><tr><th>Ring</th><th class="r">Airside log entries</th><th class="r">Complete checklists</th><th class="r">Radar hours</th><th>Grade</th><th>Without logs</th></tr></thead><tbody></tbody></table></div>
+        </section>
+        <section class="card">
+          <div class="card-h"><div><span class="q">How grades work</span><h2>Grading rules</h2></div></div>
+          <table class="tbl" style="min-width:0"><tbody>
+            <tr><td><span class="chip grade">A</span></td><td class="note">≥ 120 effective survey units. Shown normally, ±30% interval.</td></tr>
+            <tr><td><span class="chip grade">B</span></td><td class="note">≥ 60 units. Shown, ±55% interval.</td></tr>
+            <tr><td><span class="chip grade">C</span></td><td class="note">≥ 25 units. Indicative only, ±90% interval.</td></tr>
+            <tr><td><span class="chip x">None</span></td><td class="note">Below 25. No score is published. Never shown as low.</td></tr>
+          </tbody></table>
+          <p class="note">Units: one per complete checklist, two per airside log entry, thirty when radar covered the week. Scaled by how much of each source falls in the selected time of day.</p>
+        </section>
+      </div>
+      <div class="grid">
+        <section class="card">
+          <div class="card-h"><div><span class="q">What is running</span><h2>Model card</h2></div></div>
+          <div class="facts" style="grid-template-columns:1fr 1fr">
+            <div><span class="k">Version</span><span class="n">v0.1</span></div>
+            <div><span class="k">Mode</span><span class="n">Climatology</span></div>
+            <div><span class="k">Calibration κ</span><span class="n" style="color:var(--sign)">Pending</span></div>
+            <div><span class="k">Validation</span><span class="n" style="color:var(--sign)">Not run</span></div>
+          </div>
+          <p class="note"><b>Risk = κ · Σ hazard × severity × exposure.</b> Units: expected damaging strikes per 100,000 movements. Hazard is effort-normalised and zero-filled; severity is a logistic fit on log body mass; exposure is the share of each ring flown below the bird layer.</p>
+        </section>
+        <section class="card span2">
+          <div class="card-h"><div><span class="q">The ship gate</span><h2>Validation</h2></div></div>
+          <div class="gate">
+            <b>No score goes live until both pass</b>
+            <span class="note">1. Rank correlation above 0.5 between predicted and observed damaging-strike rates on airports held out of training.</span>
+            <span class="note">2. A clear margin over a baseline that uses aircraft movements alone.</span>
+          </div>
+          <div class="tbl-wrap"><table class="tbl" style="min-width:520px"><thead><tr><th>Test</th><th>Target</th><th>Result</th><th>Status</th></tr></thead><tbody>
+            <tr><td>Held-out rank correlation</td><td class="m">ρ &gt; 0.50</td><td class="m">—</td><td><span class="status pend">Not run</span></td></tr>
+            <tr><td>Beat movements-only baseline</td><td class="m">Δ skill &gt; 0</td><td class="m">—</td><td><span class="status pend">Not run</span></td></tr>
+            <tr><td>Calibration slope</td><td class="m">0.8 – 1.2</td><td class="m">—</td><td><span class="status pend">Not run</span></td></tr>
+          </tbody></table></div>
+        </section>
+      </div>
+      <section class="card">
+        <div class="card-h"><div><span class="q">Where every number came from</span><h2>Provenance ledger</h2><p id="pvSub"></p></div></div>
+        <div class="tbl-wrap"><table class="tbl" id="pvTbl"><thead><tr><th>Source</th><th>Reference</th><th>Window</th><th class="r">Records</th><th>Retrieved</th><th>Checksum</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+      </section>
+    </section>
+
+    <!-- BRIEFING -->
+    <section class="view" id="v-briefing" data-title="Briefing">
+      <div class="pp-tools">
+        <button class="btn" type="button" id="bfCopy"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="4" width="8.5" height="8.5"/><path d="M2 10V1.5h8.5"/></svg>Copy as text</button>
+        <button class="btn" type="button" disabled title="Available in the product">Export PDF</button>
+        <button class="btn" type="button" disabled title="Available in the product">Send to crew room</button>
+        <span class="mono dim" id="bfMsg" role="status"></span>
+      </div>
+      <article class="paper" id="paper"></article>
+    </section>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Species detail" aria-hidden="true"></aside>
+<div id="tip" role="tooltip"></div>
+
+<script id="ab-model">
+/* AeroBird demo model v0.1 · illustrative data only.
+   Structure follows Technical Note 02: Risk = κ · Σ_species Hazard × Severity × Exposure. */
+var AB = (() => {
+"use strict";
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const rng = seed => { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+const hash = (a, b, c) => { let h = (a * 73856093) ^ (b * 19349663) ^ (c * 83492791); h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
+const circ = (w, m) => { const d = Math.abs(w - m) % 52; return Math.min(d, 52 - d); };
+const g = (w, m, s) => Math.exp(-0.5 * (circ(w, m) / s) ** 2);
+const wrapW = w => ((w - 1) % 52 + 52) % 52 + 1;
+
+const AIRPORT = { icao: "LROP", iata: "OTP", name: "Bucharest Henri Coandă", elevFt: 314, hdg: 82, metar: "LROP 011150Z 07006KT CAVOK 16/05 Q1021 NOSIG" };
+const ZONES = [
+  { i: 0, label: "0–5 NM", r0: 0, r1: 5 }, { i: 1, label: "5–10 NM", r0: 5, r1: 10 },
+  { i: 2, label: "10–20 NM", r0: 10, r1: 20 }, { i: 3, label: "20–30 NM", r0: 20, r1: 30 }
+];
+const TODS = ["dawn", "day", "dusk", "night"];
+const TOD_LABEL = { all: "24 h", dawn: "Dawn", day: "Day", dusk: "Dusk", night: "Night" };
+const TOD_MIX = { dawn: .12, day: .58, dusk: .14, night: .16 };
+const PHASE_LABEL = { arr: "Arrivals", dep: "Departures", comb: "All movements", haz: "Birds only" };
+const PHASE_NOUN = { arr: "arrivals", dep: "departures", comb: "movements", haz: "" };
+
+const SP = [
+  { code: "eursta", name: "Common Starling", latin: "Sturnus vulgaris", mass: 78, flock: 9, base: 4.0, season: w => 0.2 + 1.3 * g(w, 40, 4) + 0.45 * g(w, 12, 3), zones: [.9, 1, .7, .4], tod: [1.6, .9, 2.6, .05], habitat: "roost flights from reedbeds at dusk; feeds on airside grass", groups: { a: .5, c: .3, w: .2 } },
+  { code: "bkhgul", name: "Black-headed Gull", latin: "Chroicocephalus ridibundus", mass: 280, flock: 4, base: 2.2, season: w => 0.35 + 0.95 * g(w, 2, 7), zones: [.5, 1, .8, .5], tod: [1.7, 1, 1.5, .1], habitat: "commutes between Rudeni landfill and Lacul Snagov", groups: { g: 1 } },
+  { code: "casgul", name: "Caspian Gull", latin: "Larus cachinnans", mass: 1150, flock: 3, base: .9, season: w => 0.3 + 1.0 * g(w, 50, 7), zones: [.3, 1, .9, .4], tod: [1.7, 1, 1.5, .1], habitat: "commutes between the Rudeni and Glina landfills", groups: { g: 1 } },
+  { code: "rook", name: "Rook", latin: "Corvus frugilegus", mass: 450, flock: 6, base: 2.6, season: w => 0.12 + 1.15 * g(w, 3, 6), zones: [.6, 1, .8, .4], tod: [1.9, .9, 2.1, .05], habitat: "flies between north Bucharest winter roosts and farmland", groups: { c: 1 } },
+  { code: "jackda", name: "Western Jackdaw", latin: "Coloeus monedula", mass: 240, flock: 4, base: 1.4, season: w => 0.4 + 0.7 * g(w, 4, 7), zones: [.5, .9, .8, .5], tod: [1.9, .9, 2.1, .05], habitat: "roosts in north Bucharest; feeds on open ground", groups: { c: 1 } },
+  { code: "rocpig", name: "Rock Dove", latin: "Columba livia", mass: 350, flock: 3, base: 1.6, season: w => 0.9 + 0.1 * Math.sin(w / 8.3), zones: [.7, 1, .6, .3], tod: [1.2, 1, 1, .05], habitat: "urban edge at Otopeni and Băneasa", groups: { u: 1 } },
+  { code: "eurkes", name: "Common Kestrel", latin: "Falco tinnunculus", mass: 200, flock: 1, base: .35, season: w => 0.6 + 0.6 * g(w, 30, 8), zones: [1, .6, .5, .5], tod: [.8, 1.2, .9, .02], habitat: "hovers over airside grass hunting small mammals", groups: { a: 1 } },
+  { code: "norlap", name: "Northern Lapwing", latin: "Vanellus vanellus", mass: 220, flock: 6, base: .8, season: w => 0.15 + 1.1 * g(w, 42, 5) + 0.55 * g(w, 11, 3), zones: [1, .5, .6, .7], tod: [1.3, 1, 1.3, .5], habitat: "flocks on short airside grass and wet fields", groups: { a: .7, f: .3 } },
+  { code: "skylar", name: "Eurasian Skylark", latin: "Alauda arvensis", mass: 38, flock: 2, base: 1.2, season: w => 0.25 + 0.85 * g(w, 18, 8), zones: [1, .4, .6, .8], tod: [1.4, 1, .8, .05], habitat: "breeds in airside grassland", groups: { a: .8, f: .2 } },
+  { code: "comswi", name: "Common Swift", latin: "Apus apus", mass: 40, flock: 4, base: 2.0, season: w => 0.01 + 1.25 * g(w, 26, 5), zones: [.6, 1, .8, .6], tod: [1.2, 1, 1.3, .4], habitat: "feeds high over the urban edge", groups: { u: .6, a: .4 } },
+  { code: "barswa", name: "Barn Swallow", latin: "Hirundo rustica", mass: 19, flock: 3, base: 1.5, season: w => 0.01 + 1.0 * g(w, 24, 7) + 0.6 * g(w, 36, 3), zones: [.8, .8, .7, .6], tod: [1.2, 1, 1.4, .02], habitat: "feeds low over grass and water", groups: { a: .5, w: .5 } },
+  { code: "gragoo", name: "Greylag Goose", latin: "Anser anser", mass: 3300, flock: 5, base: .3, season: w => 0.2 + 1.1 * g(w, 46, 5) + 0.75 * g(w, 9, 4), zones: [.1, .9, 1, .6], tod: [1.6, .7, 1.6, .7], habitat: "winters on Lacul Snagov and Căldăruşani, feeds on farmland", groups: { w: .7, f: .3 } },
+  { code: "gwfgoo", name: "Greater White-fronted Goose", latin: "Anser albifrons", mass: 2300, flock: 8, base: .6, season: w => 1.35 * g(w, 1, 5), zones: [.05, .6, 1, .9], tod: [1.6, .7, 1.6, .7], habitat: "winter visitor on Lacul Snagov and Căldăruşani", groups: { w: .6, f: .4 } },
+  { code: "grecor", name: "Great Cormorant", latin: "Phalacrocorax carbo", mass: 2300, flock: 4, base: .5, season: w => 0.3 + 0.9 * g(w, 44, 6), zones: [.1, 1, .9, .4], tod: [1.8, .8, 1.5, .1], habitat: "fishes Lacul Snagov and the Colentina lakes", groups: { w: 1 } },
+  { code: "graher", name: "Grey Heron", latin: "Ardea cinerea", mass: 1500, flock: 1, base: .3, season: w => 0.7 + 0.35 * g(w, 30, 8), zones: [.2, 1, .8, .5], tod: [1.4, .9, 1.4, .3], habitat: "fishes lake margins and drainage channels", groups: { w: 1 } },
+  { code: "whisto", name: "White Stork", latin: "Ciconia ciconia", mass: 3400, flock: 7, base: .25, season: w => 0.03 + 0.6 * g(w, 30, 10) + 1.7 * g(w, 35, 2) + 0.6 * g(w, 13, 2), zones: [.4, .7, .9, 1], tod: [.4, 1.4, .5, 0], habitat: "soars on passage along the Ialomiţa valley", groups: { f: 1 } },
+  { code: "combuz", name: "Common Buzzard", latin: "Buteo buteo", mass: 850, flock: 1, base: .3, season: w => 0.7 + 0.65 * g(w, 38, 4), zones: [.6, .6, .8, 1], tod: [.5, 1.4, .6, 0], habitat: "soars over farmland", groups: { f: 1 } },
+  { code: "mallar", name: "Mallard", latin: "Anas platyrhynchos", mass: 1100, flock: 4, base: .8, season: w => 0.4 + 0.7 * g(w, 50, 8), zones: [.2, 1, .9, .5], tod: [1.5, .7, 1.6, .8], habitat: "on Lacul Snagov and the Colentina lakes", groups: { w: 1 } }
+];
+const migW = w => g(w, 40, 4) + 0.6 * g(w, 16, 3);
+const MIG = { code: "noc", name: "Nocturnal migrants", latin: "Unidentified · radar only", mass: 25, flock: 1, base: 70, season: migW, zones: [1, 1, 1, 1], tod: [.25, .08, .55, 1], habitat: "broad-front passage overhead, visible to radar only", groups: { f: .5 }, radar: true };
+const ALL = [...SP, MIG];
+const sizeClass = m => m >= 1800 ? { k: 3, label: "Very large" } : m >= 500 ? { k: 2, label: "Large" } : m >= 100 ? { k: 1, label: "Medium" } : { k: 0, label: "Small" };
+
+const P = m => 1 / (1 + Math.exp(-(-0.847 + 0.778 * Math.log(m / 1000))));
+const V = m => P(m) / P(1000);
+const OA = [1, .85, .18, .04], OD = [.85, .12, .02, 0];
+const K = 0.045, HAZ_DIV = 7;
+const RING_T = [.1, .3, .6, 1.2], AIR_T = [.5, 1.5, 3, 4.5], HAZ_T = [1, 2.5, 4.5, 7];
+const BANDS = ["Very low", "Low", "Moderate", "High", "Severe"];
+const BAND_HEX = ["#2B6A5E", "#3BB487", "#E7BF3B", "#F47D24", "#F0392C"];
+const GRADE_W = { A: .3, B: .55, C: .9 };
+const ARR_FT = [[0, 1600], [1600, 3200], [3200, 6400], [6400, 9600]];
+const DEP_FT = [[0, 3600], [3600, 7000], [7000, 13000], [13000, 20000]];
+
+function evidence(z, w, tod) {
+  const season = 0.7 + 0.5 * g(w, 18, 6) + 0.5 * g(w, 40, 6);
+  const checklists = Math.round([4, 38, 92, 30][z] * season * (0.8 + 0.4 * hash(z, w, 5)));
+  const logs = Math.round([46, 9, 0, 0][z] * (0.85 + 0.3 * hash(z, w, 9)));
+  const radarH = w <= 3 ? 0 : Math.round(168 * (0.9 + 0.1 * hash(z, w, 2)));
+  const cf = { all: 1, day: 1, dawn: .55, dusk: .45, night: .03 }[tod], lf = { all: 1, day: 1, dawn: .5, dusk: .45, night: .15 }[tod];
+  const gr = e => e >= 120 ? "A" : e >= 60 ? "B" : e >= 25 ? "C" : null;
+  const base = checklists * cf + (radarH ? 30 : 0);
+  const eff = base + 2 * logs * lf;
+  return { checklists, logs, radarH, eff, grade: gr(eff), gradeNoLogs: gr(base) };
+}
+function finish(z, w, tod, parts) {
+  const S = parts.reduce((a, p) => a + p.val, 0), ev = evidence(z, w, tod);
+  return { z, w, tod, parts, S, arr: K * S * OA[z], dep: K * S * OD[z], comb: K * S * (OA[z] + OD[z]) / 2, haz: S / HAZ_DIV, ev, unknown: !ev.grade };
+}
+const DATA = {};
+TODS.forEach((t, ti) => {
+  DATA[t] = [];
+  for (let z = 0; z < 4; z++) {
+    DATA[t][z] = [];
+    for (let w = 1; w <= 52; w++) {
+      const parts = ALL.map((s, i) => { const rate = s.base * s.season(w) * s.zones[z] * s.tod[ti] * (0.9 + 0.2 * hash(i, z, w)); return { s, i, rate, val: rate * s.flock * V(s.mass) }; });
+      DATA[t][z][w] = finish(z, w, t, parts);
+    }
+  }
+});
+DATA.all = [];
+for (let z = 0; z < 4; z++) {
+  DATA.all[z] = [];
+  for (let w = 1; w <= 52; w++) {
+    const parts = ALL.map((s, i) => { let rate = 0, val = 0; TODS.forEach(t => { const p = DATA[t][z][w].parts[i]; rate += TOD_MIX[t] * p.rate; val += TOD_MIX[t] * p.val; }); return { s, i, rate, val }; });
+    DATA.all[z][w] = finish(z, w, "all", parts);
+  }
+}
+const get = (z, w, tod) => DATA[tod][z][wrapW(w)];
+const metric = (d, ph) => ph === "haz" ? d.haz : d[ph];
+const factor = (z, ph) => ph === "arr" ? K * OA[z] : ph === "dep" ? K * OD[z] : ph === "comb" ? K * (OA[z] + OD[z]) / 2 : 1 / HAZ_DIV;
+const thresholds = (ph, kind) => ph === "haz" ? HAZ_T : kind === "air" ? AIR_T : RING_T;
+const band = (v, ph, kind = "ring") => { const T = thresholds(ph, kind); let b = 0; while (b < 4 && v >= T[b]) b++; return b; };
+function airport(w, tod, ph) {
+  const rings = ZONES.map(z => get(z.i, w, tod)), scored = rings.filter(r => !r.unknown);
+  let v = scored.reduce((a, r) => a + metric(r, ph), 0);
+  if (ph === "haz" && scored.length) v /= scored.length;
+  return { v, rings, scored: scored.length, partial: scored.length < 4 };
+}
+const expected = (w, moves) => (airport(w, "all", "arr").v * moves / 2 + airport(w, "all", "dep").v * moves / 2) / 1e5;
+function contrib(i, w, tod, ph) { let c = 0; for (let z = 0; z < 4; z++) c += get(z, w, tod).parts[i].val * factor(z, ph); return c; }
+function grade(w, tod) {
+  const order = ["A", "B", "C"], gs = ZONES.map(z => get(z.i, w, tod).ev.grade).filter(Boolean);
+  return { grade: gs.length ? gs.reduce((a, b) => order.indexOf(b) > order.indexOf(a) ? b : a) : null, scored: gs.length };
+}
+
+/* sun times, local (EET / EEST) */
+function sun(w) {
+  const c = Math.cos(2 * Math.PI * (w - 25) / 52), eet = w >= 44 || w <= 12 ? 1 : 0;
+  return { rise: 7.17 - 1.67 * c - eet, set: 19.33 + 1.67 * c - eet };
+}
+const hhmm = h => { h = (h + 24) % 24; const H = Math.floor(h), M = Math.round((h - H) * 60); return `${String(M === 60 ? H + 1 : H).padStart(2, "0")}:${String(M === 60 ? 0 : M).padStart(2, "0")}`; };
+function hourly(w, ph) {
+  const s = sun(w), vals = [];
+  const tv = {}; TODS.forEach(t => { tv[t] = airport(w, t, ph).v; });
+  for (let h = 0; h < 24; h++) {
+    const x = h + .5;
+    const dawnW = Math.exp(-.5 * ((x - (s.rise + .4)) / .85) ** 2), duskW = Math.exp(-.5 * ((x - (s.set - .2)) / .85) ** 2);
+    const dayness = clamp(Math.min(x - (s.rise + .6), (s.set - .6) - x) / 1.2 + .5, 0, 1);
+    const rest = Math.max(0, 1 - dawnW - duskW);
+    vals.push(dawnW * tv.dawn + duskW * tv.dusk + rest * (dayness * tv.day + (1 - dayness) * tv.night));
+  }
+  return { vals, rise: s.rise, set: s.set };
+}
+
+/* radar profile: 20 bins of 500 ft, 0–10,000 ft (illustrative) */
+function radarTod(w, tod) {
+  const m = migW(w), out = [];
+  for (let i = 0; i < 20; i++) {
+    const h = (i + .5) * 500, gg = (c, s) => Math.exp(-.5 * ((h - c) / s) ** 2);
+    let v;
+    if (tod === "night") v = 1 + 1.2 * Math.exp(-h / 700) + 14 * m * gg(2300, 1100);
+    else if (tod === "dusk") v = .6 + 2.5 * Math.exp(-h / 700) + 7 * m * gg(1600, 900);
+    else if (tod === "dawn") v = .5 + 3.5 * Math.exp(-h / 700) + 3 * m * gg(1200, 800);
+    else v = .4 + 6 * Math.exp(-h / 700) + 2.5 * g(w, 36, 3) * gg(3000, 1400);
+    out.push(v * (.92 + .16 * hash(i, w, TODS.indexOf(tod) + 3)));
+  }
+  return out;
+}
+function radar(w, tod) {
+  w = wrapW(w);
+  if (tod !== "all") return radarTod(w, tod);
+  const acc = new Array(20).fill(0); TODS.forEach(t => radarTod(w, t).forEach((v, i) => { acc[i] += TOD_MIX[t] * v; })); return acc;
+}
+
+/* geography in NM from the aerodrome reference point (x east, y north) */
+const FEAT = [
+  { name: "Lacul Snagov", x: 2.8, y: 7.5, r: 2.6, g: { w: 1, g: .5 } },
+  { name: "Lacul Căldăruşani", x: 8.2, y: 5.5, r: 1.6, g: { w: 1, g: .3 } },
+  { name: "Colentina lakes", x: 1.9, y: -5.9, r: 2.3, g: { w: .6, g: .6, u: .3 } },
+  { name: "Rudeni landfill", x: -5.3, y: -6.7, r: .9, g: { g: 1, c: .8 } },
+  { name: "Glina landfill", x: 7.05, y: -10.9, r: .9, g: { g: 1, c: .8 } },
+  { name: "Bucureşti", x: .7, y: -8.7, r: 4, g: { u: 1, c: .7 } },
+  { name: "airside grass", x: 0, y: 0, r: .3, g: { a: .45 } },
+  { name: "the Ialomiţa valley", x: 0, y: 10.4, r: 1.5, linear: true, g: { w: .4, f: .6 } }
+];
+const HD = AIRPORT.hdg * Math.PI / 180, DX = Math.sin(HD), DY = Math.cos(HD);
+function groupW(w, tod) {
+  const gw = {};
+  for (const z of [0, 1, 2]) get(z, w, tod).parts.forEach(p => { for (const k in p.s.groups) gw[k] = (gw[k] || 0) + p.val * p.s.groups[k] / 3; });
+  return gw;
+}
+function rawHaz(x, y, gw) {
+  let tot = (gw.f || 0) * .25, best = null, bestC = 0;
+  for (const f of FEAT) {
+    const d = f.linear ? Math.abs(y - f.y) : Math.hypot(x - f.x, y - f.y);
+    let c = 0; for (const k in f.g) c += (gw[k] || 0) * f.g[k];
+    c *= Math.exp(-.5 * (d / (f.r * .6 + 1.2)) ** 2);
+    tot += c; if (c > bestC) { bestC = c; best = { name: f.name, dist: f.linear ? d : Math.max(0, d - f.r * .5) }; }
+  }
+  if (!best || best.dist > 4) best = { name: "open farmland", dist: 0 };
+  best.text = best.dist < .3 ? `over ${best.name}` : `${best.dist.toFixed(1)} NM from ${best.name}`;
+  return { tot, best };
+}
+let NORM = 1;
+(() => { let mx = 0; for (let w = 1; w <= 52; w += 3) for (const t of ["day", "dusk"]) { const gw = groupW(w, t); for (const s of [-1, 1]) for (let k = 0; k < 20; k++) mx = Math.max(mx, rawHaz(s * DX * (k + .5), s * DY * (k + .5), gw).tot); } NORM = mx || 1; })();
+function corridor(rwy, ph, w, tod) {
+  w = wrapW(w);
+  const dep = ph === "dep", sgn = (rwy === "08") === !dep ? -1 : 1;
+  const gw = groupW(w, tod), prof = radar(w, tod), pmx = Math.max(...prof), pts = [];
+  for (let k = 0; k < 20; k++) {
+    const s = k + .5, x = sgn * DX * s, y = sgn * DY * s, r = rawHaz(x, y, gw);
+    const alt = dep ? 720 * s + 50 : 318 * s;
+    const bin = clamp(Math.floor(alt / 500), 0, 19);
+    const ov = ph === "haz" ? 1 : .7 * Math.exp(-((alt / 1800) ** 2)) + .3 * prof[bin] / pmx * (alt < 10000 ? 1 : 0);
+    const haz = r.tot / NORM * 10;
+    pts.push({ s, alt, haz, ov, risk: haz * ov, near: r.best, side: sgn > 0 ? "east" : "west" });
+  }
+  return pts;
+}
+
+/* seasonal windows */
+function peaks(ph, tod) {
+  const ser = []; for (let w = 1; w <= 52; w++) ser[w] = airport(w, tod, ph).v;
+  const vals = ser.slice(1), mean = vals.reduce((a, b) => a + b, 0) / 52, out = [];
+  const isMax = w => ser[w] >= ser[wrapW(w - 1)] && ser[w] >= ser[wrapW(w + 1)] && ser[w] >= ser[wrapW(w - 2)] && ser[w] >= ser[wrapW(w + 2)];
+  const cands = []; for (let w = 1; w <= 52; w++) if (isMax(w) && ser[w] > mean * 1.04) cands.push(w);
+  cands.sort((a, b) => ser[b] - ser[a]);
+  for (const w of cands) {
+    if (out.some(o => circ(o.peak, w) < 5)) continue;
+    let a = w, b = w; while (ser[wrapW(a - 1)] >= ser[w] * .88 && circ(a - 1, w) < 8) a = wrapW(a - 1); while (ser[wrapW(b + 1)] >= ser[w] * .88 && circ(b + 1, w) < 8) b = wrapW(b + 1);
+    let lead = null, lv = -1; ALL.forEach((s, i) => { const c = contrib(i, w, tod, ph); if (c > lv) { lv = c; lead = s; } });
+    let ring = 0, rv = -1; for (let z = 0; z < 4; z++) { const d = get(z, w, tod); if (!d.unknown && metric(d, ph) > rv) { rv = metric(d, ph); ring = z; } }
+    out.push({ peak: w, from: a, to: b, v: ser[w], above: ser[w] / mean - 1, lead, ring });
+    if (out.length >= 4) break;
+  }
+  return out;
+}
+
+/* airside log (illustrative) */
+const AREAS = [
+  { id: "n-w", label: "RWY 08L/26R · west", x: 150, y: 92 }, { id: "n-e", label: "RWY 08L/26R · east", x: 450, y: 92 },
+  { id: "s-w", label: "RWY 08R/26L · west", x: 150, y: 176 }, { id: "s-e", label: "RWY 08R/26L · east", x: 450, y: 176 },
+  { id: "mid", label: "Grass between runways", x: 300, y: 134 }, { id: "nper", label: "North grass and perimeter", x: 300, y: 42 },
+  { id: "sper", label: "South grass and perimeter", x: 300, y: 222 }, { id: "a08", label: "Approach lights 08", x: 38, y: 134 },
+  { id: "a26", label: "Approach lights 26", x: 562, y: 134 }, { id: "apron", label: "Apron and terminal", x: 470, y: 252 }
+];
+const ACTIONS = ["Monitored", "Dispersed · pyrotechnic", "Dispersed · vehicle", "Dispersed · distress call", "Reported to ATC"];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const LOG_SP = ["eursta", "norlap", "skylar", "eurkes", "rook", "jackda", "bkhgul", "casgul", "rocpig", "barswa", "comswi", "whisto", "combuz", "gragoo"];
+function logs(w) {
+  w = wrapW(w);
+  const r = rng(1000 + w), s = sun(w), d0 = get(0, w, "day"), out = [];
+  const pool = LOG_SP.map(c => { const p = d0.parts.find(p => p.s.code === c); return { s: p.s, wt: p.val + .02 }; });
+  const tw = pool.reduce((a, p) => a + p.wt, 0);
+  const pick = () => { let u = r() * tw; for (const p of pool) { u -= p.wt; if (u <= 0) return p.s; } return pool[0].s; };
+  const busy = .6 + d0.S / 40;
+  for (let d = 0; d < 7; d++) {
+    const n = Math.round(3 + r() * 3 + busy * 2.5);
+    for (let k = 0; k < n; k++) {
+      const u = r(), t = u < .36 ? s.rise - .3 + r() * 1.8 : u < .74 ? s.rise + 1.5 + r() * (s.set - s.rise - 3) : s.set - 1.4 + r() * 1.7;
+      const sp = pick(), count = Math.max(1, Math.round(Math.exp(r() * Math.log(sp.flock * 6 + 1))));
+      let act = r() < .46 ? 0 : 1 + Math.floor(r() * 3);
+      if ((count >= 40 || sp.mass >= 1800) && r() < .6) act = 4;
+      const area = sp.code === "eurkes" || sp.code === "skylar" ? AREAS[r() < .5 ? 4 : 5 + Math.floor(r() * 2)] : AREAS[Math.floor(r() * AREAS.length)];
+      out.push({ day: d, t, time: hhmm(t), area, sp, count, action: ACTIONS[act], patrol: "P" + (1 + Math.floor(r() * 3)) });
+    }
+  }
+  return out.sort((a, b) => b.day - a.day || b.t - a.t);
+}
+
+/* dates */
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const weekStart = w => new Date(Date.UTC(2025, 11, 29) + (wrapW(w) - 1) * 7 * 864e5);
+const dstr = d => `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`;
+const weekRange = w => { const a = weekStart(w); return `${dstr(a)} – ${dstr(new Date(a.getTime() + 6 * 864e5))}`; };
+const season = w => { w = wrapW(w); return w >= 49 || w <= 8 ? "Winter · geese and corvid roosts" : w <= 20 ? "Spring passage" : w <= 31 ? "Breeding · swifts and swallows" : w <= 46 ? "Autumn passage · starlings and lapwing" : "Early winter · gulls and geese"; };
+
+return { clamp, lerp, rng, hash, wrapW, AIRPORT, ZONES, TODS, TOD_LABEL, TOD_MIX, PHASE_LABEL, PHASE_NOUN, SP, MIG, ALL, sizeClass, V, OA, OD, K, RING_T, AIR_T, HAZ_T, BANDS, BAND_HEX, GRADE_W, ARR_FT, DEP_FT,
+  get, metric, factor, thresholds, band, airport, expected, contrib, grade, sun, hhmm, hourly, radar, FEAT, corridor, peaks, AREAS, ACTIONS, DAYS, LOG_SP, logs, MON, weekStart, dstr, weekRange, season, migW };
+})();
+</script>
+
+<script>
+(() => {
+"use strict";
+const { clamp, lerp } = AB;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+const fmt = (n, d = 0) => Number(n).toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
+const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const BH = AB.BAND_HEX;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* links back to the site work locally and inside the artifact viewer */
+if (window.self !== window.top) $$("[data-artifact-href]").forEach(a => { a.href = a.dataset.artifactHref; a.target = "_blank"; a.rel = "noopener"; });
+
+/* ════════ State ════════ */
+const S = { view: "overview", week: 40, phase: "arr", tod: "all", zone: 1, rwy: "08", zoom: 30, evidence: true, stRing: 1, spFilter: "all", spQ: "", spSort: { k: "share", dir: -1 }, spOpen: null, moves: 2000, cost: 250000, lgSp: "", lgAct: "", userLogs: [] };
+try { const u = JSON.parse(localStorage.getItem("aerobird-console-logs") || "[]"); if (Array.isArray(u)) S.userLogs = u; } catch (e) {}
+
+const cur = (z = S.zone, w = S.week, tod = S.tod) => AB.get(z, w, tod);
+const val = d => AB.metric(d, S.phase);
+const unit = (ph = S.phase) => ph === "haz" ? "bird hazard index · no aircraft exposure applied" : `damaging strikes per 100,000 ${AB.PHASE_NOUN[ph]}`;
+const unitShort = (ph = S.phase) => ph === "haz" ? "hazard index" : `per 100k ${AB.PHASE_NOUN[ph]}`;
+const dec = v => v < 10 ? 2 : 1;
+const bandChip = (v, kind = "ring") => { const b = AB.band(v, S.phase, kind); return `<span class="chip band" style="background:${BH[b]}">${AB.BANDS[b]}</span>`; };
+const sizeChip = m => { const c = AB.sizeClass(m); return `<span class="chip sev${c.k}">${c.label}</span>`; };
+const massTxt = m => m >= 1000 ? fmt(m / 1000, 1) + " kg" : m + " g";
+const pct = (a, b) => b ? (a / b - 1) * 100 : 0;
+const deltaTxt = (p, invert) => { const up = p > 0.5, dn = p < -0.5; return `<span class="delta ${up ? "up" : dn ? "dn" : ""}">${up ? "▲" : dn ? "▼" : "■"} ${fmt(Math.abs(p), 0)}%</span>`; };
+
+/* number tweening */
+const tw = new WeakMap();
+function tween(node, to, d = 2) {
+  const from = parseFloat(node.dataset.v || "0"), t0 = performance.now(), dur = REDUCED ? 1 : 500, id = (tw.get(node) || 0) + 1;
+  tw.set(node, id); node.dataset.v = to;
+  const step = now => { if (tw.get(node) !== id) return; const t = clamp((now - t0) / dur, 0, 1); node.textContent = fmt(lerp(from, to, 1 - Math.pow(1 - t, 3)), d); if (t < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+
+/* tooltip */
+const tip = $("#tip");
+document.addEventListener("pointermove", e => {
+  const t = e.target.closest && e.target.closest("[data-tip]");
+  if (!t) { tip.classList.remove("on"); return; }
+  tip.innerHTML = t.getAttribute("data-tip"); tip.classList.add("on");
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = clamp(e.clientX + 14, 8, innerWidth - w - 8) + "px";
+  tip.style.top = clamp(e.clientY - h - 12, 8, innerHeight - h - 8) + "px";
+});
+
+/* ════════ Ring chart (shared by overview + map) ════════ */
+function makeChart(svg, mini) {
+  const C = 300, PX = 9, D2R = Math.PI / 180, scaled = [];
+  const nm = (dx, dy) => [C + dx * PX, C - dy * PX];
+  const crPath = (pts, closed) => {
+    const n = pts.length, P = i => pts[closed ? (i + n) % n : clamp(i, 0, n - 1)];
+    let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < (closed ? n : n - 1); i++) { const p0 = P(i - 1), p1 = P(i), p2 = P(i + 1), p3 = P(i + 2); d += `C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`; }
+    return d + (closed ? "Z" : "");
+  };
+  const blob = (cx, cy, R, seed, k = .18) => { const r = AB.rng(seed), ph = [r() * 6, r() * 6, r() * 6], pts = []; for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2, rr = R * (1 + k * Math.sin(2 * a + ph[0]) + k * .7 * Math.sin(3 * a + ph[1]) + k * .45 * Math.sin(5 * a + ph[2])); pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); } return crPath(pts, true); };
+  const ribbon = (ptsNM, wNM) => { const pts = ptsNM.map(p => nm(p[0], p[1])), wd = wNM * PX, L = [], R = []; pts.forEach((p, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)]; let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const l = Math.hypot(nx, ny) || 1; nx /= l; ny /= l; const ww = wd * (.6 + .4 * Math.sin(i * 1.7 + 1)); L.push([p[0] + nx * ww, p[1] + ny * ww]); R.push([p[0] - nx * ww, p[1] - ny * ww]); }); return crPath([...L, ...R.reverse()], true); };
+  const ann = (r0, r1) => { const c = r => `M${C - r} ${C}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0Z`; return r0 === 0 ? c(r1) : c(r1) + c(r0); };
+  const lbl = (parent, x, y, text, size, cls = "", anchor = "middle") => { const t = el("text", { x, y, "text-anchor": anchor, class: "lbl " + cls, "dominant-baseline": "middle" }, parent); t.textContent = text; scaled.push({ e: t, a: "font-size", b: size }); return t; };
+  const NSS = { "vector-effect": "non-scaling-stroke" };
+  const uid = svg.id;
+
+  const defs = el("defs", {}, svg);
+  defs.innerHTML = `<clipPath id="${uid}-clip"><circle cx="300" cy="300" r="270"/></clipPath>
+    <pattern id="${uid}-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#0A1017"/><line x1="0" y1="0" x2="0" y2="6" stroke="#5B6773" stroke-width="2"/></pattern>
+    <pattern id="${uid}-city" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><line x1="0" y1="0" x2="0" y2="4" stroke="#56636F" stroke-width=".8"/></pattern>
+    <radialGradient id="${uid}-vig" cx="50%" cy="50%" r="50%"><stop offset="70%" stop-color="#05080C" stop-opacity="0"/><stop offset="100%" stop-color="#05080C" stop-opacity=".7"/></radialGradient>
+    <linearGradient id="${uid}-sw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#46D2F2" stop-opacity="0"/><stop offset="1" stop-color="#46D2F2" stop-opacity=".22"/></linearGradient>`;
+  el("circle", { cx: C, cy: C, r: 270, fill: "#080D13" }, svg);
+  const geo = el("g", { "clip-path": `url(#${uid}-clip)` }, svg);
+  const LAT0 = 44.5711, LON0 = 26.0851, COSL = Math.cos(LAT0 * D2R);
+  const ll = (lat, lon) => nm((lon - LON0) * 60 * COSL, (lat - LAT0) * 60);
+  if (!mini) {
+    [[44.25, "44°15′"], [44.4167, "44°25′"], [44.5833, "44°35′"], [44.75, "44°45′"], [44.9167, "44°55′"]].forEach(([lat, t]) => { const [, y] = ll(lat, LON0); el("line", { x1: 0, x2: 600, y1: y, y2: y, stroke: "#131D28", "stroke-width": 1, ...NSS }, geo); lbl(geo, 44, y - 6, t, 8, "", "start"); });
+    [25.5, 25.8333, 26.1667, 26.5, 26.8333].forEach(lon => { const [x] = ll(LAT0, lon); el("line", { x1: x, x2: x, y1: 0, y2: 600, stroke: "#131D28", "stroke-width": 1, ...NSS }, geo); });
+  }
+  el("path", { d: blob(...nm(.7, -8.7), 6 * PX, 21, .14), fill: `url(#${uid}-city)`, stroke: "#2A3644", "stroke-width": 1, ...NSS }, geo);
+  const W = "#123A57", WS = "#2A6A93";
+  el("path", { d: ribbon([[-1.4, 6.9], [0, 7.6], [1.5, 7.1], [2.9, 7.8], [4.3, 7.4], [5.6, 8.1], [6.5, 7.8]], .42), fill: W, stroke: WS, "stroke-width": 1, ...NSS }, geo);
+  el("path", { d: ribbon([[6.6, 5.2], [7.7, 5.7], [8.8, 5.3], [9.8, 5.8]], .36), fill: W, stroke: WS, "stroke-width": 1, ...NSS }, geo);
+  [[-.2, -5.8, .38], [.9, -5.4, .3], [1.9, -5.75, .32], [3, -6.05, .38], [4.2, -6.45, .3]].forEach(([x, y, r], i) => { const [px, py] = nm(x, y); el("path", { d: blob(px, py, r * PX, 40 + i, .25), fill: W, stroke: WS, "stroke-width": 1, ...NSS }, geo); });
+  const riv = []; for (let x = -32; x <= 32; x++) riv.push(nm(x, 10.4 + .6 * Math.sin(x / 2.3) + .3 * Math.sin(x / .9)));
+  el("path", { d: crPath(riv, false), fill: "none", stroke: WS, "stroke-width": 1.4, ...NSS }, geo);
+  [[-5.3, -6.7, "RUDENI LANDFILL"], [7.05, -10.9, "GLINA LANDFILL"]].forEach(([x, y, t]) => { const [px, py] = nm(x, y); el("path", { d: `M${px} ${py - 5}L${px + 5} ${py + 4}L${px - 5} ${py + 4}Z`, fill: "#3A2A12", stroke: "#E7BF3B", "stroke-width": 1.2, ...NSS }, geo); if (!mini) lbl(geo, px, py + 13, t, 8); });
+  { const [px, py] = nm(.7, -4.1); el("circle", { cx: px, cy: py, r: 4, fill: "none", stroke: "#8E9CAC", "stroke-width": 1, ...NSS }, geo); el("line", { x1: px - 4, y1: py + 1.5, x2: px + 4, y2: py - 1.5, stroke: "#8E9CAC", "stroke-width": 1.5, ...NSS }, geo); if (!mini) lbl(geo, px + 8, py + 1, "LRBS", 8, "", "start"); }
+  if (!mini) {
+    lbl(geo, ...nm(2.8, 9), "LACUL SNAGOV", 8.5, "cy"); lbl(geo, ...nm(8.4, 4.4), "CĂLDĂRUŞANI", 8, "cy"); lbl(geo, ...nm(-14, 11.6), "R. IALOMIŢA", 8, "cy");
+    lbl(geo, ...nm(.7, -10.6), "BUCUREŞTI", 11, "hi"); lbl(geo, ...nm(2.2, -7), "COLENTINA LAKES", 7.5, "cy");
+  }
+
+  const RADII = [0, 5, 10, 20, 30].map(n => n * PX);
+  const ringG = el("g", {}, svg);
+  const rings = AB.ZONES.map((z, i) => {
+    const p = el("path", { d: ann(RADII[i], RADII[i + 1]), "fill-rule": "evenodd", class: "ring", "fill-opacity": .42, tabindex: 0, role: "button", "aria-label": `Select ring ${z.label}` }, ringG);
+    const pick = () => { S.zone = i; S.stRing = i; render(); };
+    p.addEventListener("click", pick);
+    p.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    return p;
+  });
+  const bnd = el("g", { "pointer-events": "none" }, svg);
+  RADII.slice(1).forEach(r => el("circle", { cx: C, cy: C, r, fill: "none", stroke: "#3A4856", "stroke-width": 1, ...NSS }, bnd));
+  const sel = el("path", { class: "sel-ring", "fill-rule": "evenodd", "stroke-width": 1.6, ...NSS }, svg);
+
+  const dotG = el("g", {}, svg), DOTS = [];
+  if (!mini) {
+    const r = AB.rng(77), hot = [[2.8, 7.5, 1.6], [8.2, 5.5, 1.2], [-5.3, -6.7, 1], [7.05, -10.9, 1.1], [1.9, -5.8, 1.6], [.7, -8.7, 4.5]];
+    for (let i = 0; i < 520; i++) {
+      let x, y, kind = "c"; const u = r();
+      if (u < .16) { const a = r() * 6.283, d = Math.sqrt(r()) * 3.6; x = Math.cos(a) * d; y = Math.sin(a) * d * .7; kind = "l"; }
+      else if (u < .62) { const h = hot[Math.floor(r() * hot.length)], a = r() * 6.283, d = Math.sqrt(r()) * h[2]; x = h[0] + Math.cos(a) * d; y = h[1] + Math.sin(a) * d; }
+      else { const a = r() * 6.283, d = 2 + Math.sqrt(r()) * 28; x = Math.cos(a) * d; y = Math.sin(a) * d; }
+      const dist = Math.hypot(x, y); if (dist > 29.5) continue;
+      const z = dist < 5 ? 0 : dist < 10 ? 1 : dist < 20 ? 2 : 3, [px, py] = nm(x, y);
+      const e = el("circle", { cx: px.toFixed(1), cy: py.toFixed(1), class: "dot", fill: kind === "l" ? "#F5C518" : "#C9D4DE", "fill-opacity": kind === "l" ? .95 : .7 }, dotG);
+      scaled.push({ e, a: "r", b: kind === "l" ? 1.9 : 1.5 }); DOTS.push({ e, z, u: r(), kind });
+    }
+  }
+
+  const dX = Math.sin(82 * D2R), dY = -Math.cos(82 * D2R), pX = -dY, pY = dX;
+  const flowG = el("g", { "pointer-events": "none" }, svg), F = {};
+  [["E", 1], ["W", -1]].forEach(([k, s]) => {
+    const far = [C + s * dX * 268, C + s * dY * 268], near = [C + s * dX * 10, C + s * dY * 10];
+    F["in" + k] = el("path", { d: `M${far[0] + pX * 3} ${far[1] + pY * 3}L${near[0] + pX * 3} ${near[1] + pY * 3}`, class: "flow", "stroke-width": 1.8, ...NSS }, flowG);
+    F["out" + k] = el("path", { d: `M${near[0] - pX * 3} ${near[1] - pY * 3}L${far[0] - pX * 3} ${far[1] - pY * 3}`, class: "flow", "stroke-width": 1.4, ...NSS }, flowG);
+  });
+  const altL = { E: [], W: [] };
+  if (!mini) [["E", 1], ["W", -1]].forEach(([k, s]) => [5, 10, 20].forEach(n => altL[k].push(lbl(flowG, C + s * dX * n * PX + pX * 16 * s, C + s * dY * n * PX + pY * 16 * s, "", 8, "mag"))));
+  const rwyG = el("g", { "pointer-events": "none" }, svg);
+  [-1, 1].forEach(s => { const cx = C + pX * s * 3.4, cy = C + pY * s * 3.4, L = 1.89 * PX / 2; el("line", { x1: cx - dX * L, y1: cy - dY * L, x2: cx + dX * L, y2: cy + dY * L, stroke: "#E5EBF1", "stroke-width": mini ? 2.5 : 3, ...NSS }, rwyG); });
+  if (!mini) lbl(rwyG, C + 2, C + 15, "LROP", 9, "hi");
+  const sweep = el("g", { "pointer-events": "none" }, svg);
+  el("path", { d: `M${C} ${C}L${C} ${C - 270}A270 270 0 0 1 ${C + 270 * Math.sin(38 * D2R)} ${C - 270 * Math.cos(38 * D2R)}Z`, fill: `url(#${uid}-sw)`, transform: `rotate(-38 ${C} ${C})` }, sweep);
+  el("line", { x1: C, y1: C, x2: C, y2: C - 270, stroke: "#46D2F2", "stroke-opacity": .55, "stroke-width": 1, ...NSS }, sweep);
+  if (!REDUCED) el("animateTransform", { attributeName: "transform", type: "rotate", from: `0 ${C} ${C}`, to: `360 ${C} ${C}`, dur: "7s", repeatCount: "indefinite" }, sweep);
+  const brg = el("g", { "pointer-events": "none" }, svg);
+  for (let b = 0; b < 360; b += 10) { const a = b * D2R, l = b % 30 === 0 ? 8 : 4; el("line", { x1: C + Math.sin(a) * 270, y1: C - Math.cos(a) * 270, x2: C + Math.sin(a) * (270 + l), y2: C - Math.cos(a) * (270 + l), stroke: "#56636F", "stroke-width": 1, ...NSS }, brg); if (!mini && b % 30 === 0) lbl(brg, C + Math.sin(a) * 286, C - Math.cos(a) * 286, String(b).padStart(3, "0"), 8); }
+  [5, 10, 20, 30].forEach(n => { const r = n * PX, a = 315 * D2R; lbl(brg, C + Math.sin(a) * r + 4, C - Math.cos(a) * r - 6, n === 30 ? "30 NM" : String(n), mini ? 13 : 8.5, "hi", "start"); });
+  el("circle", { cx: C, cy: C, r: 270, fill: `url(#${uid}-vig)`, "pointer-events": "none" }, svg);
+
+  let vb = [0, 0, 600, 600], za = 0;
+  const applyScale = () => { const w = svg.getBoundingClientRect().width || 600, k = w / vb[2]; for (const s of scaled) s.e.setAttribute(s.a, (s.b / k).toFixed(2)); };
+  const zoom = to => {
+    const target = to === 12 ? [180, 180, 240, 240] : [0, 0, 600, 600], from = vb.slice(), t0 = performance.now(), dur = REDUCED ? 1 : 750, id = ++za;
+    const tick = now => { if (id !== za) return; const t = clamp((now - t0) / dur, 0, 1), e = easeIO(t); vb = from.map((v, i) => lerp(v, target[i], e)); svg.setAttribute("viewBox", vb.map(v => v.toFixed(2)).join(" ")); applyScale(); if (t < 1) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  };
+  addEventListener("resize", applyScale);
+
+  const update = () => {
+    const ph = S.phase;
+    rings.forEach((p, i) => {
+      const d = cur(i);
+      if (d.unknown) { p.setAttribute("fill", `url(#${uid}-hatch)`); p.setAttribute("fill-opacity", .9); p.setAttribute("aria-label", `${AB.ZONES[i].label}: no score`); }
+      else { const v = val(d); p.setAttribute("fill", BH[AB.band(v, ph)]); p.setAttribute("fill-opacity", i === S.zone ? .6 : .4); p.setAttribute("aria-label", `${AB.ZONES[i].label}: ${fmt(v, 2)} ${unitShort()}`); }
+    });
+    sel.setAttribute("d", ann(RADII[S.zone], RADII[S.zone + 1]));
+    const apSide = S.rwy === "08" ? "W" : "E", dpSide = S.rwy === "08" ? "E" : "W";
+    const show = { inE: 0, inW: 0, outE: 0, outW: 0 };
+    if (ph === "arr" || ph === "comb") show["in" + apSide] = 1;
+    if (ph === "dep" || ph === "comb") show["out" + dpSide] = ph === "comb" ? .75 : 1;
+    if (ph === "haz") { show["in" + apSide] = .14; show["out" + dpSide] = .14; }
+    for (const k in F) F[k].style.opacity = show[k] || 0;
+    const A = ["1,600", "3,200", "6,400"], D = ["3,600", "7,000", "13,000"];
+    ["E", "W"].forEach(k => altL[k].forEach((t, i) => {
+      t.textContent = ph !== "haz" && (ph === "arr" || ph === "comb") && k === apSide ? `ARR ${A[i]} FT` : ph !== "haz" && (ph === "dep" || ph === "comb") && k === dpSide ? `DEP ${D[i]} FT` : "";
+    }));
+    if (DOTS.length) {
+      let mx = 0; for (let z = 0; z < 4; z++) for (let w = 1; w <= 52; w++) mx = Math.max(mx, AB.get(z, w, S.tod).S);
+      DOTS.forEach(dt => { const act = cur(dt.z).S / mx; dt.e.style.opacity = S.evidence && (dt.kind === "l" ? S.tod !== "night" : dt.u < .2 + act * 1.1) ? 1 : 0; });
+    }
+  };
+  applyScale(); requestAnimationFrame(applyScale);
+  return { update, zoom, applyScale };
+}
+
+/* ════════ Small chart helpers ════════ */
+function legendBands(kind = "ring", extra = "") {
+  const T = AB.thresholds(S.phase, kind), r = i => i === 0 ? `<${T[0]}` : i === 4 ? `≥${T[3]}` : `${T[i - 1]}–${T[i]}`;
+  return AB.BANDS.map((b, i) => `<span><i style="background:${BH[i]}"></i>${b} ${r(i)}</span>`).join("") + `<span><i class="x"></i>No score</span>` + extra;
+}
+function spark(arr, w, h, mark, color = "#8E9CAC", fill = "#E5EBF1") {
+  const mx = Math.max(...arr, 1e-9), pts = arr.map((v, i) => [i / (arr.length - 1) * w, h - 1 - v / mx * (h - 3)]);
+  const d = "M" + pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L");
+  const m = pts[mark] || pts[0];
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="overflow:visible;display:block"><path d="${d}L${w} ${h}L0 ${h}Z" fill="${fill}" fill-opacity=".1"/><path d="${d}" fill="none" stroke="${color}" stroke-width="1"/><circle cx="${m[0].toFixed(1)}" cy="${m[1].toFixed(1)}" r="2.3" fill="#FF3FA4"/></svg>`;
+}
+const spYear = (i, ph = S.phase, tod = S.tod) => { const a = []; for (let w = 1; w <= 52; w++) a.push(AB.contrib(i, w, tod, ph)); return a; };
+function topSpecies(w, n, ph = S.phase, tod = S.tod) {
+  const tot = AB.ALL.reduce((a, s, i) => a + AB.contrib(i, w, tod, ph), 0) || 1;
+  return AB.ALL.map((s, i) => { const c = AB.contrib(i, w, tod, ph), c4 = AB.contrib(i, w - 4, tod, ph), c1 = AB.contrib(i, w - 1, tod, ph); return { s, i, c, share: c / tot * 100, tr4: pct(c, c4), tr1: pct(c, c1) }; }).sort((a, b) => b.c - a.c).slice(0, n);
+}
+function riskiest(w, ph = S.phase) {
+  let best = null;
+  for (let z = 0; z < 4; z++) for (const t of AB.TODS) { const d = AB.get(z, w, t); if (d.unknown) continue; const v = AB.metric(d, ph); if (!best || v > best.v) best = { z, t, v }; }
+  return best;
+}
+
+/* ════════════════════ VIEWS ════════════════════ */
+const V = {};
+
+/* ── OVERVIEW ── */
+V.overview = (() => {
+  let chart;
+  function mount() { chart = makeChart($("#miniChart"), true); }
+  function update() {
+    const w = S.week, ph = S.phase, a = AB.airport(w, S.tod, ph), a1 = AB.airport(w - 1, S.tod, ph);
+    let yr = 0; for (let k = 1; k <= 52; k++) yr += AB.airport(k, S.tod, ph).v; yr /= 52;
+    const ab = AB.band(a.v, ph, "air");
+    $("#k1").style.setProperty("--kc", BH[ab]);
+    $("#k1").innerHTML = `<span class="t">Airport risk · ${AB.PHASE_LABEL[ph]} · ${AB.TOD_LABEL[S.tod]}</span>
+      <div class="row"><span class="v" id="k1v" style="color:${BH[ab]}">${fmt(a.v, 2)}</span>${bandChip(a.v, "air")}</div>
+      <span class="s">${unit(ph)}${a.partial ? ` · <b>${4 - a.scored} ring${a.scored === 3 ? "" : "s"} without a score</b>` : ""}</span>
+      <div class="row">${deltaTxt(pct(a.v, a1.v))}<span class="mono dim">vs last week</span>${deltaTxt(pct(a.v, yr))}<span class="mono dim">vs year</span></div>`;
+    const r = riskiest(w, ph), sn = AB.sun(w);
+    if (r) {
+      const rb = AB.band(r.v, ph);
+      $("#k2").style.setProperty("--kc", BH[rb]);
+      $("#k2").innerHTML = `<span class="t">Riskiest window this week</span><span class="v txt">${AB.ZONES[r.z].label}<br>${AB.TOD_LABEL[r.t]}</span>
+        <span class="s"><b>${fmt(r.v, 2)}</b> ${unitShort(ph)} · ${AB.BANDS[rb]}. ${r.t === "dusk" ? `Sunset ${AB.hhmm(sn.set)}` : r.t === "dawn" ? `Sunrise ${AB.hhmm(sn.rise)}` : r.t === "night" ? `After ${AB.hhmm(sn.set + 1)}` : `${AB.hhmm(sn.rise + 1)}–${AB.hhmm(sn.set - 1)}`} local.</span>`;
+    } else { $("#k2").innerHTML = `<span class="t">Riskiest window</span><span class="v txt">No score</span><span class="s">Not enough evidence this week.</span>`; }
+    let ex = 0; for (let k = 0; k < 13; k++) ex += AB.expected(w + k, S.moves);
+    $("#k3").style.setProperty("--kc", "var(--sign)");
+    $("#k3").innerHTML = `<span class="t">Expected damaging strikes · next 13 weeks</span><span class="v" style="color:var(--sign)">${fmt(ex, 2)}</span>
+      <span class="s">at <input class="inl" id="inMoves" type="number" min="0" step="100" value="${S.moves}" aria-label="Movements per week"> movements a week
+      <br>≈ <b>€${fmt(ex * S.cost, 0)}</b> at €<input class="inl" id="inCost" type="number" min="0" step="10000" value="${S.cost}" aria-label="Cost per damaging strike" style="width:9ch"> per event</span>
+      <span class="ex">Example inputs · enter your own figures</span>`;
+    const bindIn = (id, key) => { const i = $(id); i.addEventListener("change", () => { S[key] = Math.max(0, +i.value || 0); update(); }); };
+    bindIn("#inMoves", "moves"); bindIn("#inCost", "cost");
+    const gr = AB.grade(w, S.tod), radarOn = w > 3;
+    $("#k4").style.setProperty("--kc", gr.grade ? "var(--ink)" : "var(--rx)");
+    $("#k4").innerHTML = `<span class="t">Data confidence · ${AB.TOD_LABEL[S.tod]}</span><span class="v">${gr.grade ? "Grade " + gr.grade : "—"}</span>
+      <span class="s"><b>${gr.scored} of 4</b> rings have enough evidence for a score.</span>
+      <div class="row"><span class="status ${radarOn ? "ok" : "off"}">Radar</span><span class="status ok">Checklists</span><span class="status ok">Airside logs</span><span class="status pend">Strikes</span></div>`;
+
+    // matrix
+    let peak = null; for (let z = 0; z < 4; z++) for (const t of AB.TODS) { const d = AB.get(z, w, t); if (!d.unknown && (!peak || val(d) > peak.v)) peak = { z, t, v: val(d) }; }
+    let h = `<div></div>` + AB.TODS.map(t => `<div class="h">${AB.TOD_LABEL[t]}<small>${t === "dawn" ? AB.hhmm(sn.rise - .5) + "–" + AB.hhmm(sn.rise + 1.5) : t === "dusk" ? AB.hhmm(sn.set - 1.5) + "–" + AB.hhmm(sn.set + .5) : t === "day" ? "between" : "after dark"}</small></div>`).join("");
+    AB.ZONES.forEach((zz, z) => {
+      h += `<div class="rl">${zz.label}</div>`;
+      AB.TODS.forEach(t => {
+        const d = AB.get(z, w, t), v = val(d), b = AB.band(v, ph);
+        const isSel = z === S.zone && t === S.tod, isPk = peak && peak.z === z && peak.t === t;
+        h += d.unknown ? `<button type="button" class="x${isSel ? " sel" : ""}" data-z="${z}" data-t="${t}" data-tip="<b>${zz.label} · ${AB.TOD_LABEL[t]}</b><br>No score: not enough evidence">NO SCORE</button>`
+          : `<button type="button" class="${b < 2 ? "lo" : ""}${isSel ? " sel" : ""}${isPk ? " peak" : ""}" style="background:${BH[b]}" data-z="${z}" data-t="${t}" data-tip="<b>${zz.label} · ${AB.TOD_LABEL[t]}</b><br>${fmt(v, 2)} ${unitShort()} · ${AB.BANDS[b]} · grade ${d.ev.grade}">${fmt(v, dec(v))}</button>`;
+      });
+    });
+    $("#mx").innerHTML = h;
+    $$("#mx button").forEach(b => b.addEventListener("click", () => { S.zone = +b.dataset.z; S.tod = b.dataset.t; render(); }));
+    $("#mxSub").textContent = `${AB.PHASE_LABEL[ph]} · ${AB.weekRange(w)} · ${unitShort()}`;
+    $("#mxLegend").innerHTML = legendBands();
+    drawHourly(); drawAhead();
+    $("#ahSub").textContent = `${AB.PHASE_LABEL[ph]} · ${AB.TOD_LABEL[S.tod]} · airport total ${unitShort()}`;
+
+    // ring list
+    const maxR = Math.max(...AB.ZONES.map(z => val(cur(z.i))), .01);
+    $("#rlist").innerHTML = AB.ZONES.map(z => {
+      const d = cur(z.i), v = val(d), b = AB.band(v, ph);
+      return `<button type="button" class="rrow${z.i === S.zone ? " on" : ""}" data-z="${z.i}"><span class="rn">${z.label}</span><span class="bar"><i style="width:${d.unknown ? 0 : v / maxR * 100}%;background:${BH[b]}"></i></span>${d.unknown ? `<span class="chip x">No score</span><span class="rv">—</span>` : `<span class="chip grade">${d.ev.grade}</span><span class="rv">${fmt(v, dec(v))}</span>`}</button>`;
+    }).join("");
+    $$("#rlist .rrow").forEach(b => b.addEventListener("click", () => { S.zone = +b.dataset.z; S.stRing = S.zone; render(); }));
+    chart.update();
+
+    // birds
+    const top = topSpecies(w, 6);
+    $("#tbSub").textContent = `Share of airport ${ph === "haz" ? "bird hazard" : "risk"} · ${AB.TOD_LABEL[S.tod]}`;
+    $("#topBirds").innerHTML = top.map(t => {
+      const sz = Math.max(5, Math.min(26, 4 + Math.sqrt(t.s.mass) * .38));
+      const tr = Math.abs(t.tr4) < 3 ? "fl" : t.tr4 > 0 ? "up" : "dn";
+      return `<div class="sprow" data-tip="<b>${t.s.name}</b><br>${massTxt(t.s.mass)} · flocks to ${t.s.flock}× mean<br>${t.s.habitat}"><span class="mass"><i style="width:${sz}px;height:${sz}px;background:${t.s.radar ? "var(--cyan)" : AB.sizeClass(t.s.mass).k >= 2 ? "var(--ink)" : "var(--ink-2)"}"></i></span>
+        <div class="spn${t.s.radar ? " radar" : ""}"><b>${t.s.name}</b><i>${t.s.latin}</i></div>
+        <div class="share"><span class="bar"><i style="width:${t.share.toFixed(1)}%"></i></span>${t.share.toFixed(0)}% · ${t.s.radar ? "~" : ""}${massTxt(t.s.mass)}</div>
+        <span class="trend ${tr}">${tr === "fl" ? "■" : tr === "up" ? "▲" : "▼"} ${fmt(Math.abs(t.tr4), 0)}%<br><span class="dim">4 wk</span></span></div>`;
+    }).join("");
+
+    // focus
+    const lead = top[0], rw = riskiest(w, ph === "haz" ? "arr" : ph) || { z: 1, t: "dusk" };
+    const pk = AB.peaks(ph === "haz" ? "arr" : ph, "all").filter(p => AB.wrapW(p.peak - w + 52) % 52 > 0).sort((a, b) => ((a.peak - w + 52) % 52) - ((b.peak - w + 52) % 52))[0];
+    const c08 = AB.corridor("08", "arr", w, rw.t).reduce((a, p) => a + p.risk, 0), c26 = AB.corridor("26", "arr", w, rw.t).reduce((a, p) => a + p.risk, 0);
+    const worseEnd = c08 >= c26 ? "08" : "26", worsePts = AB.corridor(worseEnd, "arr", w, rw.t), worstPt = worsePts.filter(p => p.s >= 2).reduce((a, p) => p.haz > a.haz ? p : a);
+    const airLead = topSpecies(w, 12, "arr", "dawn").find(t => t.s.zones[0] >= .9) || lead;
+    const items = [
+      ["Crews", `Brief <b>RWY ${worseEnd} arrivals at ${AB.TOD_LABEL[rw.t].toLowerCase()}</b>. Beyond the airfield, birds are most concentrated around ${Math.round(worstPt.s - .5)}–${Math.round(worstPt.s + .5)} NM on final, ${worstPt.near.text}, with the aircraft near ${fmt(Math.round(worstPt.alt / 100) * 100)} ft.`, `Expect ${lead.s.name.toLowerCase()}${lead.s.flock >= 5 ? " in flocks" : ""}. Risk on RWY ${worseEnd} is ${fmt(Math.abs(pct(Math.max(c08, c26), Math.min(c08, c26))), 0)}% above the opposite direction this week.`],
+      ["Wildlife team", `Prioritise <b>${airLead.s.name.toLowerCase()}</b> on the airfield at dawn, around sunrise ${AB.hhmm(AB.sun(w).rise)}.`, `It is the largest inner-ring contributor in the first hour of light. Habitat note: ${airLead.s.habitat}.`],
+      ["Planning", pk ? `<b>Next peak W${String(pk.peak).padStart(2, "0")}</b> (${AB.weekRange(pk.peak)}), ${fmt(pk.above * 100, 0)}% above the yearly average, driven by ${pk.lead.name.toLowerCase()}.` : `No seasonal peak in the coming weeks.`, pk ? `Window W${String(pk.from).padStart(2, "0")}–W${String(pk.to).padStart(2, "0")}. Worth extra patrol cover and a crew notice ahead of it.` : ""]
+    ];
+    $("#focus").innerHTML = items.map(([who, a, b]) => `<div class="fitem"><span class="who">${who}</span><p>${a}<small>${b}</small></p></div>`).join("");
+
+    // changed
+    const ch = AB.ALL.map((s, i) => ({ s, d: AB.contrib(i, w, S.tod, ph) - AB.contrib(i, w - 1, S.tod, ph), p: pct(AB.contrib(i, w, S.tod, ph), AB.contrib(i, w - 1, S.tod, ph)) })).sort((a, b) => Math.abs(b.d) - Math.abs(a.d)).slice(0, 6);
+    $("#chSub").textContent = `W${String(AB.wrapW(w - 1)).padStart(2, "0")} → W${String(w).padStart(2, "0")} · biggest movers`;
+    $("#changed").innerHTML = ch.map(c => `<div class="sprow" style="grid-template-columns:minmax(0,1fr) 60px"><div class="spn${c.s.radar ? " radar" : ""}"><b>${c.s.name}</b><i>${c.s.latin}</i></div><span class="trend ${c.d > 0 ? "up" : "dn"}">${c.d > 0 ? "▲" : "▼"} ${fmt(Math.abs(c.p), 0)}%</span></div>`).join("");
+
+    const wins = AB.peaks(ph, S.tod).slice(0, 3);
+    $("#ovWins").innerHTML = winsHTML(wins);
+    bindWins("#ovWins");
+  }
+  function drawHourly() {
+    const svg = $("#hrChart"), W = 640, H = 150, L = 34, R = 10, T = 12, B = 22;
+    const hr = AB.hourly(S.week, S.phase), mx = Math.max(...hr.vals) * 1.1 || 1;
+    const x = h => L + h / 24 * (W - L - R), y = v => T + (1 - v / mx) * (H - T - B);
+    let s = `<rect x="${x(0)}" y="${T}" width="${x(hr.rise) - x(0)}" height="${H - T - B}" fill="#0A1525"/><rect x="${x(hr.set)}" y="${T}" width="${x(24) - x(hr.set)}" height="${H - T - B}" fill="#0A1525"/>`;
+    const pts = hr.vals.map((v, i) => [x(i + .5), y(v)]);
+    const d = "M" + pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L");
+    const b = AB.band(Math.max(...hr.vals), S.phase, "air");
+    s += `<path d="${d}L${x(23.5)} ${H - B}L${x(.5)} ${H - B}Z" fill="${BH[b]}" fill-opacity=".18"/><path d="${d}" fill="none" stroke="${BH[b]}" stroke-width="2"/>`;
+    [["SUNRISE", hr.rise], ["SUNSET", hr.set]].forEach(([t, h]) => { s += `<line x1="${x(h)}" x2="${x(h)}" y1="${T}" y2="${H - B}" stroke="#F5C518" stroke-dasharray="3 3"/><text class="ax" x="${x(h) + 4}" y="${T + 9}" fill="#F5C518" style="fill:#F5C518">${t} ${AB.hhmm(h)}</text>`; });
+    for (let hh = 0; hh <= 24; hh += 3) s += `<text class="ax" x="${x(hh)}" y="${H - 6}" text-anchor="middle">${String(hh).padStart(2, "0")}</text>`;
+    const im = hr.vals.indexOf(Math.max(...hr.vals));
+    s += `<circle cx="${pts[im][0]}" cy="${pts[im][1]}" r="4" fill="#FF3FA4"/><text class="ax" x="${pts[im][0]}" y="${pts[im][1] - 9}" text-anchor="middle" style="fill:#FF3FA4">PEAK ${String(im).padStart(2, "0")}:00–${String(im + 1).padStart(2, "0")}:00</text>`;
+    s += hr.vals.map((v, i) => `<rect x="${x(i)}" y="${T}" width="${x(1) - x(0)}" height="${H - T - B}" fill="transparent" data-tip="<b>${String(i).padStart(2, "0")}:00–${String(i + 1).padStart(2, "0")}:00</b><br>${fmt(v, 2)} ${unitShort()}"/>`).join("");
+    svg.innerHTML = s;
+    $("#hrSub").textContent = `Local time · W${String(S.week).padStart(2, "0")} · airport ${unitShort()}`;
+  }
+  function drawAhead() {
+    const svg = $("#ahChart"), W = 640, H = 190, L = 34, R = 8, T = 20, B = 24, n = 16;
+    const ser = []; for (let k = 0; k < n; k++) ser.push({ w: AB.wrapW(S.week + k), a: AB.airport(S.week + k, S.tod, S.phase) });
+    const mx = Math.max(...ser.map(s => s.a.v)) * 1.15 || 1, bw = (W - L - R) / n;
+    const y = v => T + (1 - v / mx) * (H - T - B);
+    const T_ = AB.thresholds(S.phase, "air");
+    let s = T_.filter(t => t < mx).map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="#1A2531"/><text class="ax" x="${L - 5}" y="${y(t) + 3}" text-anchor="end">${t}</text>`).join("");
+    const pk = ser.reduce((a, b) => b.a.v > a.a.v ? b : a);
+    ser.forEach((it, i) => {
+      const b = AB.band(it.a.v, S.phase, "air"), x = L + i * bw + 3, h = H - B - y(it.a.v);
+      s += `<rect x="${x}" y="${y(it.a.v)}" width="${bw - 6}" height="${h}" fill="${BH[b]}" fill-opacity="${i === 0 ? 1 : .72}" style="cursor:pointer" data-w="${it.w}" data-tip="<b>W${String(it.w).padStart(2, "0")} · ${AB.weekRange(it.w)}</b><br>${fmt(it.a.v, 2)} ${unitShort()} · ${AB.BANDS[b]}${it.a.partial ? "<br>Partial: a ring has no score" : ""}"/>`;
+      s += `<text class="ax" x="${x + (bw - 6) / 2}" y="${H - 8}" text-anchor="middle" ${i === 0 ? 'style="fill:#E5EBF1"' : ""}>W${String(it.w).padStart(2, "0")}</text>`;
+      if (it.a.partial) s += `<text class="ax" x="${x + (bw - 6) / 2}" y="${y(it.a.v) - 4}" text-anchor="middle" style="fill:#8E9CAC">*</text>`;
+    });
+    const pi = ser.indexOf(pk), px = L + pi * bw + bw / 2;
+    s += `<line x1="${px}" x2="${px}" y1="${T - 6}" y2="${y(pk.a.v) - 2}" stroke="#FF3FA4"/><text class="ax" x="${clamp(px, 60, W - 60)}" y="${T - 9}" text-anchor="middle" style="fill:#FF3FA4">PEAK W${String(pk.w).padStart(2, "0")}</text>`;
+    s += `<rect x="${L + 1}" y="${T}" width="${bw - 2}" height="${H - T - B}" fill="none" stroke="#E5EBF1" stroke-dasharray="2 3"/>`;
+    svg.innerHTML = s;
+    $$("#ahChart rect[data-w]").forEach(r => r.addEventListener("click", () => { S.week = +r.dataset.w; render(); }));
+  }
+  return { mount, update };
+})();
+
+function winsHTML(wins) {
+  if (!wins.length) return `<p class="note">No pronounced peaks for this selection.</p>`;
+  return wins.map(p => `<button type="button" class="win" data-w="${p.peak}"><span class="wd">W${String(p.from).padStart(2, "0")}–${String(p.to).padStart(2, "0")}<small>${AB.weekRange(p.from).split(" – ")[0]} – ${AB.weekRange(p.to).split(" – ")[1]}</small></span><span class="wt">${p.lead.name}<span>Peak W${String(p.peak).padStart(2, "0")} · strongest in ${AB.ZONES[p.ring].label}</span></span><span class="wp">+${fmt(p.above * 100, 0)}%</span></button>`).join("");
+}
+function bindWins(sel) { $$(sel + " .win").forEach(b => b.addEventListener("click", () => { S.week = +b.dataset.w; render(); })); }
+
+/* ── MAP ── */
+V.map = (() => {
+  let chart;
+  function mount() {
+    chart = makeChart($("#mapChart"), false);
+    bindSeg("#mRwy", "rwy", () => {}); bindSeg("#mZoom", "zoom", v => chart.zoom(+v));
+    $("#mEv").addEventListener("change", e => { S.evidence = e.target.checked; update(); });
+  }
+  function update() {
+    segState("#mRwy", S.rwy); segState("#mZoom", String(S.zoom));
+    chart.update(); chart.applyScale();
+    $("#mapLegend").innerHTML = legendBands("ring", S.evidence ? `<span><i class="dt" style="background:#F5C518"></i>Airside log</span><span><i class="dt" style="background:#C9D4DE"></i>Checklist</span>` : "");
+    const d = cur(), ph = S.phase, v = val(d), b = AB.band(v, ph);
+    $("#rpZone").textContent = AB.ZONES[S.zone].label;
+    const band = $("#rpBand"), grade = $("#rpGrade"), num = $("#rpNum"), vv = $("#rpVal");
+    if (d.unknown) {
+      band.textContent = "No score"; band.style.background = "var(--rx)"; band.style.color = "var(--ink)"; grade.textContent = "Insufficient";
+      num.classList.add("unknown"); tw.set(vv, (tw.get(vv) || 0) + 1); vv.textContent = "No score"; vv.dataset.v = "0"; vv.style.color = "";
+      $("#rpUnit").textContent = "Not enough evidence this week. Shown as unknown, never as low.";
+      $("#rpCi").style.opacity = .25; $("#ciTxt").textContent = `${d.ev.radarH ? "" : "No radar coverage · "}${Math.round(d.ev.eff)} effective survey units, below the bar of 25`;
+    } else {
+      band.textContent = AB.BANDS[b]; band.style.background = BH[b]; band.style.color = "var(--bg)"; grade.textContent = "Grade " + d.ev.grade;
+      num.classList.remove("unknown"); vv.style.color = BH[b]; tween(vv, v, dec(v));
+      $("#rpUnit").textContent = unit(ph);
+      const wd = AB.GRADE_W[d.ev.grade], lo = v / (1 + wd), hi = v * (1 + wd);
+      const lp = x => clamp((Math.log10(Math.max(x, .01)) + 2) / 3 * 100, 0, 100);
+      $("#rpCi").style.opacity = 1; $("#ciRange").style.left = lp(lo) + "%"; $("#ciRange").style.width = (lp(hi) - lp(lo)) + "%"; $("#ciPt").style.left = lp(v) + "%";
+      const T = AB.thresholds(ph, "ring"), edges = [.01, ...T, 10];
+      $("#ciBands").innerHTML = edges.slice(0, -1).map((e, i) => `<i style="background:${BH[i]};width:${(lp(edges[i + 1]) - lp(e)).toFixed(2)}%"></i>`).join("");
+      $("#ciTxt").textContent = `90% interval ${fmt(lo, 2)} – ${fmt(hi, 2)} · log scale`;
+    }
+    const mx = Math.max(d.arr, d.dep, .001);
+    if (d.unknown) { ["#rpArr", "#rpDep"].forEach(s => { $(s).textContent = "—"; }); $("#rpArrB").style.width = $("#rpDepB").style.width = "0"; }
+    else { tween($("#rpArr"), d.arr, 2); tween($("#rpDep"), d.dep, 2); $("#rpArrB").style.width = d.arr / mx * 100 + "%"; $("#rpDepB").style.width = d.dep / mx * 100 + "%"; }
+    const tot = d.S || 1, top = d.parts.slice().sort((a, b) => b.val - a.val).slice(0, 5);
+    $("#rpCount").textContent = `${d.parts.filter(p => p.val > .05).length} taxa`;
+    $("#rpSp").innerHTML = top.map(p => {
+      const yr = []; for (let w = 1; w <= 52; w++) yr.push(AB.get(S.zone, w, S.tod).parts[p.i].val);
+      const sh = p.val / tot * 100;
+      return `<div class="sprow" style="grid-template-columns:minmax(0,1fr) 46px 70px 58px"><div class="spn${p.s.radar ? " radar" : ""}"><b>${p.s.name}</b><i>${p.s.latin}</i></div><span class="mono dim" style="text-align:right">${p.s.radar ? "~" : ""}${massTxt(p.s.mass)}</span><div class="share"><span class="bar"><i style="width:${sh.toFixed(1)}%"></i></span>${sh.toFixed(0)}%</div>${spark(yr, 58, 22, S.week - 1, p.s.radar ? "#46D2F2" : "#8E9CAC")}</div>`;
+    }).join("");
+    const lead = top[0];
+    $("#rpDriver").innerHTML = d.unknown ? "Bird activity is still modelled here, but the evidence is too thin to publish a score."
+      : `<b>${lead.s.name}</b> drives ${(lead.val / tot * 100).toFixed(0)}% of this ring in W${String(S.week).padStart(2, "0")}: ${lead.s.habitat}.` + (ph === "dep" && S.zone >= 1 ? " Departures are mostly above the bird layer this far out." : ph === "arr" && S.zone === 1 ? " A 3° approach is still between 1,600 and 3,200 ft here." : "");
+    const ev = d.ev, rows = [["Airside wildlife log entries", ev.logs, 50, "#F5C518"], ["Complete eBird checklists", ev.checklists, 140, "#C9D4DE"], ["Radar hours (of 168)", ev.radarH, 168, "#46D2F2"]];
+    $("#rpEv").innerHTML = rows.map(([k, n, m, c]) => `<div class="ev-row"><span>${k}</span><span class="n">${n}</span><span class="bar"><i style="width:${clamp(n / m * 100, 0, 100)}%;background:${c}"></i></span></div>`).join("");
+    $("#rpEvNote").innerHTML = d.unknown ? `Below the bar for a score this week.` : ev.logs > 0 && ev.gradeNoLogs !== ev.grade ? `Grade ${ev.grade} with airside logs. <b>Without them this ring would grade ${ev.gradeNoLogs || "as unknown"}.</b>` : ev.logs === 0 ? "No airside logs this far out. Radar and checklists carry this ring." : `Grade ${ev.grade}.`;
+    drawCorridor();
+  }
+  function drawCorridor() {
+    const ph = S.phase === "comb" ? "arr" : S.phase, pts = AB.corridor(S.rwy, ph, S.week, S.tod);
+    const dep = ph === "dep", svg = $("#corrChart"), W = 760, H = 230, L = 40, R = 52, T = 18, B = 30;
+    const bw = (W - L - R) / 20, mxH = Math.max(...pts.map(p => p.haz)) * 1.12 || 1;
+    const y = v => T + (1 - v / mxH) * (H - T - B), altMax = dep ? 15000 : 7000, ya = a => T + (1 - Math.min(a, altMax) / altMax) * (H - T - B);
+    let s = `<rect x="${L}" y="${ya(3000)}" width="${W - L - R}" height="${H - B - ya(3000)}" fill="#46D2F2" fill-opacity=".05"/><line x1="${L}" x2="${W - R}" y1="${ya(3000)}" y2="${ya(3000)}" stroke="#46D2F2" stroke-opacity=".5" stroke-dasharray="4 4"/><text class="ax" x="${W - R - 4}" y="${ya(3000) - 5}" text-anchor="end" style="fill:#46D2F2">BIRD LAYER ≈ 3,000 FT</text>`;
+    const worst = pts.filter(p => p.s >= 2).reduce((a, p) => p.haz > a.haz ? p : a);
+    pts.forEach((p, i) => {
+      const x = L + i * bw + 2;
+      s += `<rect x="${x}" y="${y(p.haz)}" width="${bw - 4}" height="${H - B - y(p.haz)}" fill="#263340"/>`;
+      if (ph !== "haz") s += `<rect x="${x}" y="${y(p.risk)}" width="${bw - 4}" height="${H - B - y(p.risk)}" fill="#F47D24"/>`;
+      s += `<rect x="${x}" y="${T}" width="${bw - 4}" height="${H - T - B}" fill="transparent" data-tip="<b>${fmt(p.s - .5, 0)}–${fmt(p.s + .5, 0)} NM ${dep ? "after take-off" : "before threshold"}</b><br>Aircraft ≈ ${fmt(Math.round(p.alt / 100) * 100)} ft<br>Birds ${fmt(p.haz, 1)} · risk ${fmt(p.risk, 1)}<br>Main source: ${p.near.text}"/>`;
+      if (i % 2 === 0) s += `<text class="ax" x="${x + (bw - 4) / 2}" y="${H - 12}" text-anchor="middle">${i}</text>`;
+    });
+    s += `<text class="ax" x="${(W - R + L) / 2}" y="${H - 1}" text-anchor="middle">NM FROM ${dep ? "TAKE-OFF" : "THRESHOLD"}</text>`;
+    const ap = pts.map((p, i) => `${(L + i * bw + bw / 2).toFixed(1)} ${ya(p.alt).toFixed(1)}`).join("L");
+    s += `<path d="M${L} ${ya(0)}L${ap}" fill="none" stroke="#FF3FA4" stroke-width="2"/>`;
+    [0, dep ? 5000 : 2000, dep ? 10000 : 4000, dep ? 15000 : 6000].forEach(a => { s += `<text class="ax" x="${W - R + 6}" y="${ya(a) + 3}" style="fill:#FF3FA4">${fmt(a)}</text>`; });
+    if (ph !== "haz") { const wi = pts.indexOf(worst), wx = L + wi * bw + bw / 2; s += `<line x1="${wx}" x2="${wx}" y1="${T - 8}" y2="${y(worst.haz)}" stroke="#E5EBF1" stroke-dasharray="2 3"/><text class="ax" x="${clamp(wx, 120, W - 140)}" y="${T - 10}" text-anchor="middle" style="fill:#E5EBF1">MOST BIRDS BEYOND THE AIRFIELD ${fmt(worst.s - .5, 0)}–${fmt(worst.s + .5, 0)} NM</text>`; }
+    svg.innerHTML = s;
+    const endTxt = dep ? `Climb-out RWY ${S.rwy}` : `Final approach RWY ${S.rwy}`;
+    $("#corrTitle").textContent = endTxt;
+    $("#corrSub").textContent = `${dep ? (S.rwy === "08" ? "Departing east" : "Departing west") : (S.rwy === "08" ? "Arriving from the west" : "Arriving from the east")} · W${String(S.week).padStart(2, "0")} · ${AB.TOD_LABEL[S.tod]}${S.phase === "comb" ? " · showing arrivals" : ""}`;
+    $("#corrNote").innerHTML = ph === "haz" ? "Birds only: aircraft altitude is ignored." : `The orange bars are bird presence multiplied by how much of the flight path sits in the bird layer. Risk is highest close in, where the aircraft is lowest; the first two miles are the airfield itself, covered by the wildlife team. <b>Beyond that, birds are most concentrated at ${fmt(worst.s - .5, 0)}–${fmt(worst.s + .5, 0)} NM</b>, ${worst.near.text}, with the aircraft near ${fmt(Math.round(worst.alt / 100) * 100)} ft.`;
+  }
+  return { mount, update };
+})();
+
+/* ── OUTLOOK ── */
+V.outlook = (() => {
+  const cells = [];
+  function mount() {
+    const cal = $("#cal");
+    let h = `<div class="mo"></div>`;
+    const first = {}; for (let w = 1; w <= 52; w++) { const d = AB.weekStart(w), m = d.getUTCMonth(); if (!(m in first) && d.getUTCFullYear() === 2026) first[m] = w; }
+    for (let w = 1; w <= 52; w++) { const m = Object.keys(first).find(k => first[k] === w); h += `<div class="mo">${m !== undefined ? AB.MON[m] : ""}</div>`; }
+    cal.innerHTML = h;
+    const addRow = (label, z, cls) => {
+      const rl = document.createElement("div"); rl.className = "rl " + (cls || ""); rl.textContent = label; if (z >= 0) { rl.dataset.z = z; rl.addEventListener("click", () => { S.zone = z; S.stRing = z; render(); }); }
+      cal.appendChild(rl); cells[z + 1] = [];
+      for (let w = 1; w <= 52; w++) {
+        const c = document.createElement("button"); c.type = "button"; c.className = "c"; c.dataset.w = w;
+        c.addEventListener("click", () => { S.week = w; if (z >= 0) { S.zone = z; S.stRing = z; } render(); });
+        cal.appendChild(c); cells[z + 1][w] = c;
+      }
+    };
+    addRow("Airport", -1, "apt");
+    const gap = document.createElement("div"); gap.className = "gap"; cal.appendChild(gap);
+    AB.ZONES.forEach(z => addRow(z.label, z.i));
+    $("#stRing").innerHTML = AB.ZONES.map(z => `<button type="button" data-v="${z.i}">${z.label.replace(" NM", "")}</button>`).join("");
+    $$("#stRing button").forEach(b => b.addEventListener("click", () => { S.stRing = +b.dataset.v; update(); }));
+  }
+  function update() {
+    const ph = S.phase;
+    for (let w = 1; w <= 52; w++) {
+      const a = AB.airport(w, S.tod, ph), c = cells[0][w], b = AB.band(a.v, ph, "air");
+      c.style.backgroundColor = BH[b]; c.classList.toggle("wk", w === S.week);
+      c.setAttribute("data-tip", `<b>Airport · W${String(w).padStart(2, "0")}</b><br>${AB.weekRange(w)}<br>${fmt(a.v, 2)} ${unitShort()} · ${AB.BANDS[b]}${a.partial ? "<br>Partial total" : ""}`);
+      AB.ZONES.forEach(z => {
+        const d = AB.get(z.i, w, S.tod), cc = cells[z.i + 1][w], v = val(d), bb = AB.band(v, ph);
+        cc.classList.toggle("x", d.unknown); if (!d.unknown) cc.style.backgroundColor = BH[bb];
+        cc.classList.toggle("wk", w === S.week); cc.classList.toggle("sel", w === S.week && z.i === S.zone);
+        cc.setAttribute("data-tip", d.unknown ? `<b>${z.label} · W${String(w).padStart(2, "0")}</b><br>No score` : `<b>${z.label} · W${String(w).padStart(2, "0")}</b><br>${fmt(v, 2)} ${unitShort()} · ${AB.BANDS[bb]} · grade ${d.ev.grade}`);
+      });
+    }
+    $$("#cal .rl[data-z]").forEach(r => r.classList.toggle("on", +r.dataset.z === S.zone));
+    $("#calSub").textContent = `${AB.PHASE_LABEL[ph]} · ${AB.TOD_LABEL[S.tod]} · ${unitShort()} · airport row uses its own scale`;
+    $("#calLegend").innerHTML = legendBands();
+    segState("#stRing", String(S.stRing));
+    drawStack();
+    const wins = AB.peaks(ph, S.tod);
+    $("#kwSub").textContent = `${AB.PHASE_LABEL[ph]} · ${AB.TOD_LABEL[S.tod]} · weeks within 12% of each peak`;
+    $("#kwList").innerHTML = winsHTML(wins); bindWins("#kwList");
+  }
+  function drawStack() {
+    const z = S.stRing, ph = S.phase, svg = $("#stChart"), W = 760, H = 260, L = 40, R = 10, T = 14, B = 26;
+    const f = AB.factor(z, ph), series = AB.ALL.map((s, i) => { const a = []; for (let w = 1; w <= 52; w++) a.push(AB.get(z, w, S.tod).parts[i].val * f); return { s, a, sum: a.reduce((x, y) => x + y, 0) }; }).sort((a, b) => b.sum - a.sum);
+    const top = series.slice(0, 6), rest = series.slice(6), other = { s: { name: "Other species", latin: "" }, a: new Array(52).fill(0).map((_, w) => rest.reduce((x, r) => x + r.a[w], 0)) };
+    const layers = [...top, other], PAL = ["#46D2F2", "#9C8CFF", "#E8E0C8", "#5FA8FF", "#C38BD9", "#8FB8A8", "#34414E"];
+    const tot = new Array(52).fill(0).map((_, w) => layers.reduce((x, l) => x + l.a[w], 0)), mx = Math.max(...tot) * 1.08 || 1;
+    const x = w => L + w / 51 * (W - L - R), y = v => T + (1 - v / mx) * (H - T - B);
+    let s = "", base = new Array(52).fill(0);
+    for (let k = 0; k <= 4; k++) { const v = mx * k / 4; s += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="#1A2531"/><text class="ax" x="${L - 5}" y="${y(v) + 3}" text-anchor="end">${fmt(v, v < 1 ? 2 : 1)}</text>`; }
+    layers.forEach((l, li) => {
+      const up = l.a.map((v, w) => base[w] + v);
+      const d = "M" + up.map((v, w) => `${x(w).toFixed(1)} ${y(v).toFixed(1)}`).join("L") + "L" + base.map((v, w) => `${x(w).toFixed(1)} ${y(v).toFixed(1)}`).reverse().join("L") + "Z";
+      s += `<path d="${d}" fill="${PAL[li]}" fill-opacity="${li === 6 ? .8 : .78}" stroke="#05080C" stroke-width=".6"/>`;
+      base = up;
+    });
+    const first = {}; for (let w = 1; w <= 52; w++) { const m = AB.weekStart(w).getUTCMonth(); if (!(m in first) && AB.weekStart(w).getUTCFullYear() === 2026) { first[m] = w; s += `<text class="ax" x="${x(w - 1)}" y="${H - 8}">${AB.MON[m].toUpperCase()}</text>`; } }
+    const cx = x(S.week - 1);
+    s += `<line x1="${cx}" x2="${cx}" y1="${T}" y2="${H - B}" stroke="#FF3FA4" stroke-width="1.5"/><text class="ax" x="${clamp(cx, 40, W - 40)}" y="${T - 3}" text-anchor="middle" style="fill:#FF3FA4">W${String(S.week).padStart(2, "0")}</text>`;
+    for (let w = 0; w < 52; w++) {
+      const rows = layers.map((l, li) => ({ n: l.s.name, v: l.a[w], c: PAL[li] })).filter(r => r.v > 0).sort((a, b) => b.v - a.v).slice(0, 4);
+      s += `<rect x="${x(w) - (W - L - R) / 102}" y="${T}" width="${(W - L - R) / 51}" height="${H - T - B}" fill="transparent" style="cursor:pointer" data-w="${w + 1}" data-tip="<b>W${String(w + 1).padStart(2, "0")} · ${AB.weekRange(w + 1)}</b><br>${rows.map(r => `${r.n}: ${fmt(r.v, 3)}`).join("<br>")}"/>`;
+    }
+    svg.innerHTML = s;
+    $$("#stChart rect[data-w]").forEach(r => r.addEventListener("click", () => { S.week = +r.dataset.w; render(); }));
+    $("#stLegend").innerHTML = layers.map((l, i) => `<span><i style="background:${PAL[i]}"></i>${l.s.name}</span>`).join("");
+    $("#stSub").textContent = `${AB.ZONES[z].label} · ${AB.PHASE_LABEL[ph]} · ${AB.TOD_LABEL[S.tod]} · ${unitShort()}`;
+  }
+  return { mount, update };
+})();
+
+/* ── SPECIES ── */
+V.species = (() => {
+  const COLS = [["name", "Species"], ["mass", "Mass"], ["size", "Size class"], ["flock", "Flocking"], ["peak", "Peak"], ["rings", "Main rings"], ["share", "Share now"], ["trend", "4-week trend"], ["year", "Year"]];
+  function mount() {
+    $("#spTbl thead").innerHTML = "<tr>" + COLS.map(([k, t]) => k === "year" || k === "rings" || k === "size" ? `<th>${t}</th>` : `<th class="${["mass", "flock", "share", "trend"].includes(k) ? "r" : ""}"><button type="button" data-k="${k}">${t}<span></span></button></th>`).join("") + "</tr>";
+    $$("#spTbl th button").forEach(b => b.addEventListener("click", () => { const k = b.dataset.k; S.spSort = { k, dir: S.spSort.k === k ? -S.spSort.dir : (k === "name" || k === "peak" ? 1 : -1) }; update(); }));
+    $("#spQ").addEventListener("input", e => { S.spQ = e.target.value.toLowerCase(); update(); });
+    bindSeg("#spF", "spFilter");
+    $("#scrim").addEventListener("click", closeDrawer);
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
+  }
+  const peakW = s => { let bw = 1, bv = -1; for (let w = 1; w <= 52; w++) { const v = s.season(w); if (v > bv) { bv = v; bw = w; } } return bw; };
+  function rows() {
+    const w = S.week, ph = S.phase, tot = AB.ALL.reduce((a, s, i) => a + AB.contrib(i, w, S.tod, ph), 0) || 1;
+    return AB.ALL.map((s, i) => {
+      const c = AB.contrib(i, w, S.tod, ph), pk = peakW(s), zs = s.zones.map((v, z) => ({ v, z })).sort((a, b) => b.v - a.v).slice(0, 2).map(o => AB.ZONES[o.z].label.replace(" NM", "")).join(" · ");
+      return { s, i, name: s.name, mass: s.mass, size: AB.sizeClass(s.mass).k, flock: s.flock, peak: pk, rings: zs, share: c / tot * 100, trend: pct(c, AB.contrib(i, w - 4, S.tod, ph)) };
+    });
+  }
+  function update() {
+    segState("#spF", S.spFilter);
+    let r = rows().filter(x => (S.spFilter === "all" || String(x.size) === S.spFilter) && (!S.spQ || (x.s.name + " " + x.s.latin).toLowerCase().includes(S.spQ)));
+    const { k, dir } = S.spSort;
+    r.sort((a, b) => (typeof a[k] === "string" ? a[k].localeCompare(b[k]) : a[k] - b[k]) * dir);
+    $$("#spTbl th button").forEach(b => { b.classList.toggle("on", b.dataset.k === k); b.querySelector("span").textContent = b.dataset.k === k ? (dir > 0 ? "↑" : "↓") : ""; });
+    $("#spSub").textContent = `${AB.ALL.length} taxa modelled · share of airport ${S.phase === "haz" ? "bird hazard" : "risk"} for W${String(S.week).padStart(2, "0")} · ${AB.PHASE_LABEL[S.phase]} · ${AB.TOD_LABEL[S.tod]}`;
+    $("#spTbl tbody").innerHTML = r.map(x => {
+      const yr = spYear(x.i), tr = Math.abs(x.trend) < 3 ? "fl" : x.trend > 0 ? "up" : "dn";
+      return `<tr data-i="${x.i}" class="${S.spOpen === x.i ? "on" : ""}" tabindex="0">
+        <td><div class="spn${x.s.radar ? " radar" : ""}"><b>${x.s.name}</b><i>${x.s.latin}</i></div></td>
+        <td class="r m">${x.s.radar ? "~" : ""}${massTxt(x.mass)}</td><td>${sizeChip(x.mass)}</td><td class="r m">${x.flock}×</td>
+        <td class="m">W${String(x.peak).padStart(2, "0")} · ${AB.MON[AB.weekStart(x.peak).getUTCMonth()]}</td><td class="m">${x.rings}</td>
+        <td class="r"><div class="share" style="min-width:90px"><span class="bar"><i style="width:${Math.min(100, x.share * 2.5).toFixed(1)}%"></i></span>${x.share.toFixed(1)}%</div></td>
+        <td class="r"><span class="trend ${tr}">${tr === "fl" ? "■" : tr === "up" ? "▲" : "▼"} ${fmt(Math.abs(x.trend), 0)}%</span></td>
+        <td>${spark(yr, 90, 22, S.week - 1, x.s.radar ? "#46D2F2" : "#8E9CAC")}</td></tr>`;
+    }).join("") || `<tr><td colspan="9" class="note">No species match that search.</td></tr>`;
+    $$("#spTbl tbody tr[data-i]").forEach(t => { const open = () => openDrawer(+t.dataset.i); t.addEventListener("click", open); t.addEventListener("keydown", e => { if (e.key === "Enter") open(); }); });
+    if (S.spOpen !== null) fillDrawer(S.spOpen);
+  }
+  function openDrawer(i) { S.spOpen = i; fillDrawer(i); $("#drawer").classList.add("on"); $("#drawer").setAttribute("aria-hidden", "false"); $("#scrim").classList.add("on"); update(); setTimeout(() => $("#drClose")?.focus(), 50); }
+  function closeDrawer() { if (S.spOpen === null) return; S.spOpen = null; $("#drawer").classList.remove("on"); $("#drawer").setAttribute("aria-hidden", "true"); $("#scrim").classList.remove("on"); if (S.view === "species") update(); }
+  function fillDrawer(i) {
+    const s = AB.ALL[i], c = AB.sizeClass(s.mass), w = S.week;
+    const W = 420, H = 150, L = 6, R = 6, T = 8, B = 18, cols = ["#46D2F2", "#FF3FA4", "#E8E0C8", "#8FB8A8"];
+    let mx = 0; const lines = AB.ZONES.map(z => { const a = []; for (let k = 1; k <= 52; k++) a.push(AB.get(z.i, k, S.tod).parts[i].rate); mx = Math.max(mx, ...a); return a; });
+    mx = mx * 1.1 || 1;
+    const x = k => L + k / 51 * (W - L - R), y = v => T + (1 - v / mx) * (H - T - B);
+    let sv = lines.map((a, z) => `<path d="M${a.map((v, k) => `${x(k).toFixed(1)} ${y(v).toFixed(1)}`).join("L")}" fill="none" stroke="${cols[z]}" stroke-width="1.6"/>`).join("");
+    sv += `<line x1="${x(w - 1)}" x2="${x(w - 1)}" y1="${T}" y2="${H - B}" stroke="#E5EBF1" stroke-dasharray="2 3"/>`;
+    [0, 13, 26, 39].forEach(k => { sv += `<text class="ax" x="${x(k)}" y="${H - 4}">${AB.MON[AB.weekStart(k + 1).getUTCMonth()].toUpperCase()}</text>`; });
+    const todV = AB.TODS.map((t, ti) => s.tod[ti]), tmx = Math.max(...todV) || 1;
+    const shA = AB.contrib(i, w, S.tod, "arr") / (AB.ALL.reduce((a, _, j) => a + AB.contrib(j, w, S.tod, "arr"), 0) || 1) * 100;
+    const shD = AB.contrib(i, w, S.tod, "dep") / (AB.ALL.reduce((a, _, j) => a + AB.contrib(j, w, S.tod, "dep"), 0) || 1) * 100;
+    const where = AB.FEAT.filter(f => Object.keys(f.g).some(g => (s.groups[g] || 0) * f.g[g] >= .3)).map(f => f.name);
+    $("#drawer").innerHTML = `<button class="btn dr-close" id="drClose" type="button" aria-label="Close">Close ✕</button>
+      <div><span class="mono" style="color:var(--mag)">${s.radar ? "Radar layer" : "Species"} · ${s.code}</span><h2 class="dr-name">${s.name}</h2><p class="dr-lat">${s.latin}</p></div>
+      <div class="facts"><div><span class="k">Mean mass</span><span class="n">${s.radar ? "~" : ""}${massTxt(s.mass)}</span></div><div><span class="k">Size class</span><span class="n" style="font-size:19px">${c.label}</span></div><div><span class="k">Flocking</span><span class="n">${s.flock}×</span></div>
+        <div><span class="k">Severity weight</span><span class="n">${fmt(AB.V(s.mass), 2)}</span></div><div><span class="k">Share · arr</span><span class="n">${shA.toFixed(1)}%</span></div><div><span class="k">Share · dep</span><span class="n">${shD.toFixed(1)}%</span></div></div>
+      <div style="display:grid;gap:8px"><p class="sub-h"><span>Seasonality by ring · birds per survey-hour</span></p><svg class="ch" viewBox="0 0 ${W} ${H}">${sv}</svg>
+        <div class="legend">${AB.ZONES.map((z, k) => `<span><i style="background:${cols[k]};height:2px"></i>${z.label}</span>`).join("")}</div></div>
+      <div style="display:grid;gap:8px"><p class="sub-h"><span>Time of day</span><b>relative activity</b></p>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-items:end;height:90px">${AB.TODS.map((t, ti) => `<div style="display:grid;gap:4px;align-content:end;height:100%"><div style="height:${(todV[ti] / tmx * 64).toFixed(0)}px;background:${t === "night" ? "var(--cyan)" : "var(--ink-2)"};transition:height .5s"></div><span class="mono dim" style="text-align:center">${AB.TOD_LABEL[t]}</span></div>`).join("")}</div></div>
+      <div style="display:grid;gap:6px"><p class="sub-h"><span>Where and why</span></p><p class="note" style="font-size:14px;color:var(--ink)">${s.habitat[0].toUpperCase() + s.habitat.slice(1)}.</p>${where.length ? `<p class="note">Linked sources on the map: ${where.join(", ")}.</p>` : ""}</div>
+      <p class="note" style="border-top:1px solid var(--rule);padding-top:12px">${s.radar ? "Radar detects these birds as biomass. Species, mass and flocking are assumed for small passerines." : "Flight altitude is not modelled per species. eBird records where a bird was seen, not how high. Altitude comes from radar, for all birds combined."} Severity weight is relative to a 1 kg bird, from a logistic fit on body mass.</p>`;
+    $("#drClose").addEventListener("click", closeDrawer);
+  }
+  return { mount, update };
+})();
+
+/* ── ALTITUDE ── */
+V.altitude = (() => {
+  function mount() {}
+  function update() { drawRadargram(); drawProfile(); drawOverlap(); }
+  const mixRGB = (t) => { const a = [10, 16, 23], b = [70, 210, 242], c = [229, 235, 241], u = clamp(t, 0, 1); const m = u < .75 ? a.map((v, i) => v + (b[i] - v) * u / .75) : b.map((v, i) => v + (c[i] - v) * (u - .75) / .25); return `rgb(${m.map(Math.round).join(",")})`; };
+  function drawRadargram() {
+    const svg = $("#rgChart"), W = 760, H = 280, L = 52, R = 8, T = 8, B = 26, tod = S.tod;
+    const all = []; let mx = 0; for (let w = 1; w <= 52; w++) { const p = AB.radar(w, tod); all.push(p); mx = Math.max(mx, ...p); }
+    const cw = (W - L - R) / 52, ch = (H - T - B) / 20;
+    let s = "";
+    all.forEach((p, wi) => p.forEach((v, bi) => { s += `<rect x="${(L + wi * cw).toFixed(1)}" y="${(H - B - (bi + 1) * ch).toFixed(1)}" width="${(cw + .4).toFixed(1)}" height="${(ch + .4).toFixed(1)}" fill="${wi < 3 ? "#121A22" : mixRGB(v / mx)}"/>`; }));
+    s += `<rect x="${L}" y="${H - B - ch}" width="${W - L - R}" height="${ch}" fill="url(#rgHatch)"/>`;
+    s += `<rect x="${L}" y="${T}" width="${cw * 3}" height="${H - T - B}" fill="url(#rgHatch)"/><text class="ax" x="${L + cw * 1.5}" y="${T + 40}" text-anchor="middle" transform="rotate(-90 ${L + cw * 1.5} ${T + 40})" style="fill:#8E9CAC">RADAR OUTAGE</text>`;
+    [0, 2000, 4000, 6000, 8000, 10000].forEach(f => { const yy = H - B - f / 500 * ch; s += `<text class="ax" x="${L - 6}" y="${yy + 3}" text-anchor="end">${f ? f / 1000 + "k ft" : "0"}</text>`; });
+    const first = {}; for (let w = 1; w <= 52; w++) { const m = AB.weekStart(w).getUTCMonth(); if (!(m in first) && AB.weekStart(w).getUTCFullYear() === 2026) { first[m] = w; s += `<text class="ax" x="${L + (w - 1) * cw}" y="${H - 8}">${AB.MON[m].toUpperCase()}</text>`; } }
+    const cx = L + (S.week - .5) * cw;
+    s += `<line x1="${cx}" x2="${cx}" y1="${T}" y2="${H - B}" stroke="#FF3FA4" stroke-width="1.5"/>`;
+    for (let w = 0; w < 52; w++) s += `<rect x="${L + w * cw}" y="${T}" width="${cw}" height="${H - T - B}" fill="transparent" style="cursor:pointer" data-w="${w + 1}" data-tip="<b>W${String(w + 1).padStart(2, "0")}</b> · ${AB.weekRange(w + 1)}<br>${w < 3 ? "No radar this week" : `Peak density at ${fmt(all[w].indexOf(Math.max(...all[w])) * 500)}–${fmt(all[w].indexOf(Math.max(...all[w])) * 500 + 500)} ft`}"/>`;
+    svg.innerHTML = `<defs><pattern id="rgHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#5B6773" stroke-width="1.5" stroke-opacity=".7"/></pattern></defs>` + s;
+    $$("#rgChart rect[data-w]").forEach(r => r.addEventListener("click", () => { S.week = +r.dataset.w; render(); }));
+    $("#rgSub").textContent = `Bird density by height and week · ${AB.TOD_LABEL[tod]} · illustrative profiles in the format weather-radar networks publish`;
+    $("#rgLegend").innerHTML = `<span style="gap:8px">Low <i style="width:90px;background:linear-gradient(90deg,${mixRGB(0)},${mixRGB(.4)},${mixRGB(.75)},${mixRGB(1)})"></i> High</span><span><i class="x"></i>Lower confidence</span>`;
+  }
+  function bandsFor(z, ph) { const b = []; if (ph === "arr" || ph === "comb") b.push(["ARR", AB.ARR_FT[z]]); if (ph === "dep" || ph === "comb") b.push(["DEP", AB.DEP_FT[z]]); return b; }
+  const share = (prof, lo, hi) => { let a = 0, t = 0; prof.forEach((v, i) => { t += v; const l = i * 500, h = l + 500; if (l < hi && h > lo) a += v * (Math.min(h, hi) - Math.max(l, lo)) / 500; }); return t ? a / t : 0; };
+  function drawProfile() {
+    const svg = $("#pfChart"), W = 320, H = 240, L = 46, R = 8, T = 8, B = 22, prof = AB.radar(S.week, S.tod), mx = Math.max(...prof, 1);
+    const y = ft => T + (1 - ft / 10000) * (H - T - B), x = v => L + v / mx * (W - L - R), bh = (H - T - B) / 20;
+    let s = `<rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="#0E1620"/>`;
+    const bands = bandsFor(S.zone, S.phase === "haz" ? "comb" : S.phase);
+    bands.forEach(([k, [a, b]], i) => { if (a >= 10000) return; const bb = Math.min(b, 10000); s += `<rect x="${L}" y="${y(bb)}" width="${W - L - R}" height="${y(a) - y(bb)}" fill="#FF3FA4" fill-opacity=".1" stroke="#FF3FA4" stroke-opacity=".6" stroke-dasharray="3 3"/><text class="ax" x="${W - R - 4 - i * 30}" y="${y(bb) + 11}" text-anchor="end" style="fill:#FF3FA4">${k}</text>`; });
+    prof.forEach((v, i) => { const lo = i * 500, hi = lo + 500, inside = bands.some(([, [a, b]]) => lo < b && hi > a); s += `<rect x="${L}" y="${y(hi) + 1}" width="${Math.max(1, x(v) - L).toFixed(1)}" height="${bh - 2}" fill="${S.week <= 3 ? "#26333F" : inside ? "#46D2F2" : "#2B4A5A"}"/>`; });
+    s += `<rect x="${L}" y="${y(500)}" width="${W - L - R}" height="${bh}" fill="url(#pfHatch)"/>`;
+    [0, 2000, 4000, 6000, 8000, 10000].forEach(f => { s += `<text class="ax" x="${L - 6}" y="${y(f) + 3}" text-anchor="end">${f ? f / 1000 + "k ft" : "0"}</text>`; });
+    s += `<text class="ax" x="${L}" y="${H - 6}">DENSITY →</text>`;
+    svg.innerHTML = `<defs><pattern id="pfHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="#5B6773" stroke-width="1.5" stroke-opacity=".7"/></pattern></defs>` + s;
+    const tot = bands.length ? bands.reduce((a, [, [lo, hi]]) => Math.max(a, share(prof, lo, hi)), 0) : 0;
+    $("#pfSub").textContent = S.week <= 3 ? "No radar coverage this week." : `${AB.ZONES[S.zone].label} · ${AB.TOD_LABEL[S.tod]} · ${Math.round(tot * 100)}% of detected birds inside the aircraft band`;
+  }
+  function drawOverlap() {
+    const prof = AB.radar(S.week, S.tod), f = n => fmt(n);
+    $("#ovTbl tbody").innerHTML = AB.ZONES.map(z => {
+      const [a0, a1] = AB.ARR_FT[z.i], [d0, d1] = AB.DEP_FT[z.i], sa = share(prof, a0, a1), sd = share(prof, d0, d1);
+      const cell = v => `<span style="display:inline-flex;gap:8px;align-items:center;justify-content:flex-end;width:100%"><span style="width:60px;height:4px;background:var(--rule);display:inline-block"><i style="display:block;height:100%;width:${(v * 100).toFixed(0)}%;background:var(--cyan)"></i></span>${S.week <= 3 ? "—" : Math.round(v * 100) + "%"}</span>`;
+      return `<tr class="${z.i === S.zone ? "on" : ""}" data-z="${z.i}"><td class="m">${z.label}</td><td class="m">${f(a0)}–${f(a1)} ft</td><td class="r m">${cell(sa)}</td><td class="m">${f(d0)}–${d1 >= 20000 ? "+" : f(d1) + " ft"}</td><td class="r m">${cell(sd)}</td></tr>`;
+    }).join("");
+    $$("#ovTbl tbody tr").forEach(t => t.addEventListener("click", () => { S.zone = +t.dataset.z; render(); }));
+  }
+  return { mount, update };
+})();
+
+/* ── AIRSIDE LOG ── */
+V.log = (() => {
+  function mount() {
+    const spOpts = AB.LOG_SP.map(c => AB.SP.find(s => s.code === c));
+    $("#lgSp").innerHTML = `<option value="">All species</option>` + spOpts.map(s => `<option value="${s.code}">${s.name}</option>`).join("");
+    $("#lgAct").innerHTML = `<option value="">All actions</option>` + AB.ACTIONS.map(a => `<option>${a}</option>`).join("");
+    $("#fDay").innerHTML = AB.DAYS.map((d, i) => `<option value="${i}"${i === 2 ? " selected" : ""}>${d}</option>`).join("");
+    $("#fArea").innerHTML = AB.AREAS.map(a => `<option value="${a.id}">${a.label}</option>`).join("");
+    $("#fSp").innerHTML = spOpts.map(s => `<option value="${s.code}">${s.name}</option>`).join("");
+    $("#fAct").innerHTML = AB.ACTIONS.map(a => `<option>${a}</option>`).join("");
+    $("#lgSp").addEventListener("change", e => { S.lgSp = e.target.value; update(); });
+    $("#lgAct").addEventListener("change", e => { S.lgAct = e.target.value; update(); });
+    $("#lgAddBtn").addEventListener("click", () => { const f = $("#lgForm"); f.hidden = !f.hidden; if (!f.hidden) $("#fTime").focus(); });
+    $("#lgForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const [hh, mm] = ($("#fTime").value || "07:15").split(":").map(Number);
+      S.userLogs.push({ week: S.week, day: +$("#fDay").value, t: hh + mm / 60, time: $("#fTime").value, area: $("#fArea").value, sp: $("#fSp").value, count: Math.max(1, +$("#fCount").value || 1), action: $("#fAct").value, patrol: "You", ts: Date.now() });
+      try { localStorage.setItem("aerobird-console-logs", JSON.stringify(S.userLogs.slice(-200))); } catch (e2) {}
+      $("#lgForm").hidden = true; update();
+    });
+  }
+  function entries() {
+    const base = AB.logs(S.week);
+    const mine = S.userLogs.filter(u => u.week === S.week).map(u => ({ day: u.day, t: u.t, time: u.time, area: AB.AREAS.find(a => a.id === u.area) || AB.AREAS[0], sp: AB.SP.find(s => s.code === u.sp) || AB.SP[0], count: u.count, action: u.action, patrol: u.patrol, mine: true, ts: u.ts }));
+    return [...mine, ...base].sort((a, b) => b.day - a.day || b.t - a.t);
+  }
+  function update() {
+    const all = entries(), sn = AB.sun(S.week);
+    const birds = all.reduce((a, e) => a + e.count, 0), disp = all.filter(e => e.action.startsWith("Dispersed")).length, atc = all.filter(e => e.action === "Reported to ATC").length;
+    const twi = all.filter(e => Math.abs(e.t - sn.rise - .4) < 1.3 || Math.abs(e.t - sn.set + .2) < 1.3).length;
+    const k = (t, v, s, c) => `<div class="kpi" style="--kc:${c}"><span class="t">${t}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
+    $("#lgK").innerHTML = k("Entries this week", all.length, `${AB.weekRange(S.week)} · 3 patrols`, "var(--sign)") + k("Birds logged", fmt(birds), `${new Set(all.map(e => e.sp.code)).size} species`, "var(--ink)") + k("Dispersals", disp, `${Math.round(disp / Math.max(1, all.length) * 100)}% of entries · ${atc} reported to ATC`, "var(--r3)") + k("Within an hour of dawn or dusk", Math.round(twi / Math.max(1, all.length) * 100) + "%", `Sunrise ${AB.hhmm(sn.rise)} · sunset ${AB.hhmm(sn.set)}`, "var(--mag)");
+    // by hour
+    const svg = $("#lhChart"), W = 520, H = 190, L = 28, R = 8, T = 14, B = 24, h0 = 4, h1 = 22, n = h1 - h0;
+    const cnt = new Array(n).fill(0); all.forEach(e => { const i = Math.floor(e.t) - h0; if (i >= 0 && i < n) cnt[i]++; });
+    const mx = Math.max(...cnt, 1) * 1.15, bw = (W - L - R) / n, y = v => T + (1 - v / mx) * (H - T - B), xh = h => L + (h - h0) * bw;
+    let s = `<rect x="${xh(h0)}" y="${T}" width="${xh(sn.rise) - xh(h0)}" height="${H - T - B}" fill="#0A1525"/><rect x="${xh(sn.set)}" y="${T}" width="${xh(h1) - xh(sn.set)}" height="${H - T - B}" fill="#0A1525"/>`;
+    cnt.forEach((c, i) => { s += `<rect x="${L + i * bw + 2}" y="${y(c)}" width="${bw - 4}" height="${H - B - y(c)}" fill="#F5C518" fill-opacity=".85" data-tip="<b>${String(i + h0).padStart(2, "0")}:00</b><br>${c} entries"/>`; if (i % 3 === 0) s += `<text class="ax" x="${L + i * bw + bw / 2}" y="${H - 8}" text-anchor="middle">${String(i + h0).padStart(2, "0")}</text>`; });
+    [["SUNRISE", sn.rise], ["SUNSET", sn.set]].forEach(([t, h]) => { s += `<line x1="${xh(h)}" x2="${xh(h)}" y1="${T}" y2="${H - B}" stroke="#FF3FA4" stroke-dasharray="3 3"/><text class="ax" x="${xh(h) + 4}" y="${T + 8}" style="fill:#FF3FA4">${t}</text>`; });
+    svg.innerHTML = s;
+    $("#lhSub").textContent = `Local time · W${String(S.week).padStart(2, "0")} · all patrols`;
+    // schematic
+    const byA = {}; all.forEach(e => { byA[e.area.id] = (byA[e.area.id] || 0) + e.count; });
+    const amx = Math.max(...Object.values(byA), 1);
+    let sc = `<rect x="0" y="0" width="600" height="270" fill="#0E1620"/>`;
+    sc += `<rect x="20" y="20" width="560" height="232" fill="#0F1E17" stroke="#26333F" stroke-dasharray="4 4"/>`;
+    sc += `<rect x="70" y="86" width="460" height="12" fill="#2A3644"/><rect x="70" y="170" width="460" height="12" fill="#2A3644"/>`;
+    sc += `<line x1="80" y1="92" x2="520" y2="92" stroke="#E5EBF1" stroke-dasharray="10 8" stroke-width="1.2"/><line x1="80" y1="176" x2="520" y2="176" stroke="#E5EBF1" stroke-dasharray="10 8" stroke-width="1.2"/>`;
+    sc += `<text class="ax" x="76" y="80">08L</text><text class="ax" x="510" y="80">26R</text><text class="ax" x="76" y="198">08R</text><text class="ax" x="510" y="198">26L</text>`;
+    sc += `<rect x="380" y="232" width="170" height="26" fill="#1A2531"/><text class="ax" x="465" y="249" text-anchor="middle">TERMINAL</text>`;
+    AB.AREAS.forEach(a => { const v = byA[a.id] || 0, r = 4 + Math.sqrt(v / amx) * 24; sc += `<circle cx="${a.x}" cy="${a.y}" r="${r.toFixed(1)}" fill="#F5C518" fill-opacity=".22" stroke="#F5C518" stroke-width="1.2" data-tip="<b>${a.label}</b><br>${v} birds logged this week"/><circle cx="${a.x}" cy="${a.y}" r="2" fill="#F5C518" pointer-events="none"/>`; });
+    sc += `<text class="ax" x="30" y="262">SCHEMATIC · NOT TO SCALE</text>`;
+    $("#asChart").innerHTML = sc;
+    // table
+    const f = all.filter(e => (!S.lgSp || e.sp.code === S.lgSp) && (!S.lgAct || e.action === S.lgAct));
+    $("#lgSub").textContent = `${f.length} of ${all.length} entries · illustrative records, plus anything you log here (saved in this browser only)`;
+    const ac = a => a.startsWith("Dispersed") ? "d" : a.startsWith("Reported") ? "a" : "m";
+    $("#lgTbl tbody").innerHTML = f.map(e => `<tr class="${e.mine && Date.now() - e.ts < 4000 ? "new-row" : ""}"><td class="m">${AB.DAYS[e.day]}</td><td class="m">${e.time}</td><td>${e.area.label}</td><td><div class="spn"><b>${e.sp.name}</b><i>${e.sp.latin}</i></div></td><td class="r m">${e.count}</td><td><span class="act ${ac(e.action)}">${e.action}</span></td><td class="m">${e.patrol}</td></tr>`).join("") || `<tr><td colspan="7" class="note">No entries match these filters.</td></tr>`;
+  }
+  return { mount, update };
+})();
+
+/* ── EVIDENCE ── */
+V.evidence = (() => {
+  function mount() {}
+  function update() {
+    const w = S.week, radarOn = w > 3;
+    let ck = 0, lg = 0; AB.ZONES.forEach(z => { const e = AB.get(z.i, w, "all").ev; ck += e.checklists; lg += e.logs; });
+    const card = (t, st, sc, p, meta) => `<section class="card"><span class="status ${sc}">${st}</span><h3>${t}</h3><p>${p}</p><div class="meta">${meta}</div></section>`;
+    $("#srcCards").innerHTML =
+      card("Weather radar", radarOn ? "Covered" : "Outage", radarOn ? "ok" : "off", "Bird density, speed and direction in 500 ft bins, day and night.", `This week <b>${radarOn ? "168 h" : "0 h"}</b><br>Network OPERA · Bucureşti radar<br>Licence CC BY 4.0`) +
+      card("Citizen science", "Covered", "ok", "Complete checklists, divided by survey hours, with genuine zeros.", `This week <b>${fmt(ck)} checklists</b><br>Source eBird<br>Thin inside 5 NM`) +
+      card("Airside logs", "Connected", "ok", "Your wildlife team’s patrols. The best data for the inner ring.", `This week <b>${fmt(lg)} entries</b><br>Source operator log<br>Stays private to you`) +
+      card("Strike history", "Calibration pending", "warn", "Reported strikes with species, phase and damage. Used to fit severity and test the model.", `Records <b>not yet loaded</b><br>National + public databases<br>Required before go-live`);
+    $("#ggSub").textContent = `W${String(w).padStart(2, "0")} · ${AB.weekRange(w)}`;
+    let h = `<div></div>` + ["24 h", ...AB.TODS.map(t => AB.TOD_LABEL[t])].map(t => `<div class="h">${t}</div>`).join("");
+    AB.ZONES.forEach(z => { h += `<div class="rl">${z.label}</div>`; ["all", ...AB.TODS].forEach(t => { const e = AB.get(z.i, w, t).ev; h += `<div class="g ${e.grade || "X"}" data-tip="<b>${z.label} · ${AB.TOD_LABEL[t]}</b><br>${Math.round(e.eff)} effective units">${e.grade || "NONE"}</div>`; }); });
+    $("#gg").innerHTML = h;
+    $("#cvTbl tbody").innerHTML = AB.ZONES.map(z => { const e = AB.get(z.i, w, "all").ev; return `<tr><td class="m">${z.label}</td><td class="r m">${e.logs}</td><td class="r m">${e.checklists}</td><td class="r m">${e.radarH}</td><td>${e.grade ? `<span class="chip grade">${e.grade}</span>` : `<span class="chip x">None</span>`}</td><td>${e.gradeNoLogs ? `<span class="chip out">${e.gradeNoLogs}</span>` : `<span class="chip x">None</span>`}</td></tr>`; }).join("");
+    const r = AB.rng(500 + w), hx = () => Array.from({ length: 4 }, () => Math.floor(r() * 65536).toString(16).padStart(4, "0")).join("");
+    const mon = AB.weekStart(w), d = n => { const x = new Date(mon.getTime() + n * 864e5); return `${AB.dstr(x)} 03:${String(10 + Math.floor(r() * 40)).padStart(2, "0")}Z`; };
+    const rows = [
+      ["Weather radar profiles", "OPERA · Bucureşti", `W${String(w).padStart(2, "0")}`, radarOn ? fmt(168 * 12) : "0", d(7), radarOn ? ["ok", "Ingested"] : ["off", "Outage"]],
+      ["Complete checklists", "eBird", `W${String(w).padStart(2, "0")}`, fmt(ck), d(7), ["ok", "Ingested"]],
+      ["Airside wildlife log", "Operator · patrols P1–P3", `W${String(w).padStart(2, "0")}`, fmt(lg), d(7), ["ok", "Ingested"]],
+      ["Species traits", "Published body-mass data", "Static", "19", "Reference", ["ok", "Loaded"]],
+      ["Land cover", "Copernicus", "2024", "—", "Reference", ["ok", "Loaded"]],
+      ["Strike records", "National + public databases", "—", "—", "—", ["warn", "Pending"]]
+    ];
+    $("#pvTbl tbody").innerHTML = rows.map(x => `<tr><td>${x[0]}</td><td class="m">${x[1]}</td><td class="m">${x[2]}</td><td class="r m">${x[3]}</td><td class="m">${x[4]}</td><td class="m dim">${x[5][1] === "Pending" ? "—" : "sha256:" + hx()}</td><td><span class="status ${x[5][0]}">${x[5][1]}</span></td></tr>`).join("");
+    $("#pvSub").textContent = "Every score records the inputs and model version that produced it. Illustrative entries.";
+  }
+  return { mount, update };
+})();
+
+/* ── BRIEFING ── */
+V.briefing = (() => {
+  let text = "";
+  function mount() {
+    $("#bfCopy").addEventListener("click", () => {
+      const done = m => { $("#bfMsg").textContent = m; setTimeout(() => { $("#bfMsg").textContent = ""; }, 2400); };
+      try { navigator.clipboard.writeText(text).then(() => done("Copied"), () => { selectPaper(); done("Selected · press ⌘C"); }); } catch (e) { selectPaper(); done("Selected · press ⌘C"); }
+    });
+  }
+  function selectPaper() { const r = document.createRange(); r.selectNodeContents($("#paper")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  function update() {
+    const w = S.week, ph = S.phase === "haz" ? "arr" : S.phase, sn = AB.sun(w), a = AB.airport(w, "all", "arr"), dp = AB.airport(w, "all", "dep");
+    const rw = riskiest(w, ph), top = topSpecies(w, 5, ph, "all"), gr = AB.grade(w, "all");
+    const nxt = []; for (let k = 1; k <= 4; k++) nxt.push({ w: AB.wrapW(w + k), v: AB.airport(w + k, "all", ph).v });
+    const pk = AB.peaks(ph, "all").sort((x, y) => ((x.peak - w + 52) % 52) - ((y.peak - w + 52) % 52)).find(p => (p.peak - w + 52) % 52 > 0);
+    const ab = AB.band(a.v, "arr", "air"), db = AB.band(dp.v, "dep", "air");
+    const c08 = AB.corridor("08", "arr", w, rw ? rw.t : "dusk").reduce((s, p) => s + p.risk, 0), c26 = AB.corridor("26", "arr", w, rw ? rw.t : "dusk").reduce((s, p) => s + p.risk, 0);
+    const ringRows = AB.ZONES.map(z => { const d = AB.get(z.i, w, "all"); return d.unknown ? `<tr><td>${z.label}</td><td>—</td><td>—</td><td>No score</td><td>—</td></tr>` : `<tr><td>${z.label}</td><td>${fmt(d.arr, 2)}</td><td>${fmt(d.dep, 2)}</td><td><span class="sw" style="background:${BH[AB.band(AB.metric(d, ph), ph)]}"></span>${AB.BANDS[AB.band(AB.metric(d, ph), ph)]}</td><td>${d.ev.grade}</td></tr>`; }).join("");
+    const sum = `${AB.BANDS[ab]} arrival risk and ${AB.BANDS[db].toLowerCase()} departure risk this week (${fmt(a.v, 2)} and ${fmt(dp.v, 2)} damaging strikes per 100,000 movements). ${rw ? `The riskiest window is ${AB.ZONES[rw.z].label} at ${AB.TOD_LABEL[rw.t].toLowerCase()}.` : ""} ${top[0].s.name} leads the species list.`;
+    $("#paper").innerHTML = `
+      <header class="pp-head"><div><span class="k">Wildlife hazard briefing · prototype</span><h2>LROP · Week ${String(w).padStart(2, "0")}</h2></div>
+        <div class="pp-meta">${AB.weekRange(w)} 2026<br>Sunrise <b>${AB.hhmm(sn.rise)}</b> · sunset <b>${AB.hhmm(sn.set)}</b> local<br>Model v0.1 · data grade <b>${gr.grade || "—"}</b><br>Illustrative data · not for operational use</div></header>
+      <section class="pp-sec"><h3>Summary</h3><div><p class="lead">${sum}</p></div></section>
+      <section class="pp-sec"><h3>Risk by ring</h3><div><table class="pp-tbl"><thead><tr><th>Ring</th><th>Arrivals</th><th>Departures</th><th>${AB.PHASE_LABEL[ph]}</th><th>Grade</th></tr></thead><tbody>${ringRows}</tbody></table><p style="font-size:12px;color:var(--p-ink-2);margin-top:6px">Damaging strikes per 100,000 movements, 24-hour average.</p></div></section>
+      <section class="pp-sec"><h3>Timing</h3><div><p>${rw ? `Highest exposure at <b>${AB.TOD_LABEL[rw.t].toLowerCase()}</b>${rw.t === "dawn" ? `, around sunrise ${AB.hhmm(sn.rise)}` : rw.t === "dusk" ? `, around sunset ${AB.hhmm(sn.set)}` : ""}, in the ${AB.ZONES[rw.z].label} ring.` : "No scored window this week."} RWY ${c08 >= c26 ? "08" : "26"} arrivals carry ${fmt(Math.abs(pct(Math.max(c08, c26), Math.min(c08, c26))), 0)}% more risk than the opposite direction.</p></div></section>
+      <section class="pp-sec"><h3>Species to watch</h3><div><table class="pp-tbl"><thead><tr><th>Species</th><th>Mass</th><th>Share</th><th>Where</th></tr></thead><tbody>${top.map(t => `<tr><td><b>${t.s.name}</b><br><span class="lat">${t.s.latin}</span></td><td>${t.s.radar ? "~" : ""}${massTxt(t.s.mass)}</td><td>${t.share.toFixed(0)}%</td><td style="font-size:12.5px">${t.s.habitat}</td></tr>`).join("")}</tbody></table></div></section>
+      <section class="pp-sec"><h3>Outlook</h3><div><p>${nxt.map(n => `W${String(n.w).padStart(2, "0")} <b>${fmt(n.v, 2)}</b>`).join(" · ")}</p>${pk ? `<p>Next peak <b>W${String(pk.peak).padStart(2, "0")}</b> (${AB.weekRange(pk.peak)}), ${fmt(pk.above * 100, 0)}% above the yearly average, driven by ${pk.lead.name.toLowerCase()}.</p>` : ""}</div></section>
+      <section class="pp-sec"><h3>Notes</h3><div>${$$("#focus .fitem").map(f => `<p><b>${f.querySelector(".who").textContent}.</b> ${f.querySelector("p").childNodes[0] ? f.querySelector("p").innerHTML.replace(/<small>.*<\/small>/, "") : ""}</p>`).join("")}</div></section>
+      <section class="pp-sec"><h3>Data and limits</h3><div><p style="font-size:13px;color:var(--p-ink-2)">Seasonal climatology, not a live forecast. Scores are expected damaging strikes per 100,000 movements with intervals set by data grade. Rings without enough evidence show no score. κ is not yet calibrated against strike records and the model has not passed validation. Prototype on illustrative data.</p></div></section>
+      <footer class="pp-foot">AeroBird · decision support for wildlife hazard management · not a certified safety product</footer>`;
+    text = $("#paper").innerText;
+  }
+  return { mount, update };
+})();
+
+/* ════════ Controls, router, render ════════ */
+function segState(sel, v) { $$(sel + " button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === v))); }
+function bindSeg(sel, key, cb) { $$(sel + " button").forEach(b => b.addEventListener("click", () => { const v = b.dataset.v; S[key] = key === "zoom" ? +v : v; if (cb) cb(v); render(); })); }
+bindSeg("#gPhase", "phase"); bindSeg("#gTod", "tod");
+$("#wkPrev").addEventListener("click", () => { S.week = AB.wrapW(S.week - 1); render(); });
+$("#wkNext").addEventListener("click", () => { S.week = AB.wrapW(S.week + 1); render(); });
+
+const VIEWS = ["overview", "briefing", "map", "outlook", "species", "altitude", "log", "evidence"];
+const SUBS = { overview: "This week at a glance", briefing: "Ready to share", map: "Rings, flight paths, evidence", outlook: "The year ahead", species: "Who is out there", altitude: "Radar height profiles", log: "Your wildlife team", evidence: "Sources, grades, provenance" };
+const mounted = {};
+function route() {
+  const v = (location.hash || "#overview").slice(1);
+  S.view = VIEWS.includes(v) ? v : "overview";
+  $$(".view").forEach(s => s.classList.toggle("on", s.id === "v-" + S.view));
+  $$(".nav a").forEach(a => a.setAttribute("aria-current", a.dataset.v === S.view ? "page" : "false"));
+  if (!mounted[S.view]) { V[S.view].mount(); mounted[S.view] = true; }
+  if (S.view === "briefing" && !mounted.overview) { V.overview.mount(); mounted.overview = true; V.overview.update(); }
+  render();
+  window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+}
+function render() {
+  segState("#gPhase", S.phase); segState("#gTod", S.tod);
+  $("#wkLbl").textContent = "W" + String(S.week).padStart(2, "0");
+  $("#wkDates").textContent = AB.weekRange(S.week);
+  $("#vTitle").textContent = $("#v-" + S.view).dataset.title;
+  $("#vSub").textContent = `LROP · ${SUBS[S.view]} · ${AB.season(S.week)}`;
+  if (S.view === "briefing" && mounted.overview) V.overview.update();
+  V[S.view].update();
+}
+addEventListener("hashchange", route);
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input, select, textarea") || e.metaKey || e.ctrlKey || e.altKey) return;
+  const n = +e.key; if (n >= 1 && n <= 8) { location.hash = "#" + ["overview", "briefing", "map", "outlook", "species", "altitude", "log", "evidence"][n - 1]; }
+  if (e.key === "ArrowLeft" && !e.target.closest(".ab-chart")) { S.week = AB.wrapW(S.week - 1); render(); }
+  if (e.key === "ArrowRight" && !e.target.closest(".ab-chart")) { S.week = AB.wrapW(S.week + 1); render(); }
+});
+route();
+})();
+</script>
