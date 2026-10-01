@@ -1,0 +1,5 @@
+.claude
+spike
+data-strategy*.md
+.env*
+!.env.example

@@ -10,7 +10,7 @@ Wildlife-strike risk forecasting for airports: by ring, by week and by phase of 
 |---|---|
 | `waitlist/index.html` | Marketing site and waitlist, with a quick interactive risk board for one airport (LROP) |
 | `waitlist/demo.html` | Demo console: overview, briefing, risk map, outlook, species, altitude, airside log, evidence |
-| `waitlist/vercel.json` | Static hosting config (clean URLs) |
+| `vercel.json` | Vercel config: serves `waitlist/` as static files with clean URLs |
 
 Both pages are single static HTML files with no build step and no dependencies beyond Google Fonts.
 
@@ -24,7 +24,7 @@ Then open http://localhost:3000 and http://localhost:3000/demo.
 
 ## Deploy
 
-Vercel project settings: **Root Directory** `waitlist`, **Framework Preset** Other, no build command, no output directory.
+Connected to Vercel through GitHub: every push to `main` deploys to production, other branches get preview URLs. `vercel.json` points the output at `waitlist/`, so no build step or root-directory setting is needed.
 
 ## Known gaps
 
