@@ -4,3 +4,5 @@ node_modules/
 spike/cache/
 spike/out/
 .claude/settings.local.json
+.vercel
+.env*
