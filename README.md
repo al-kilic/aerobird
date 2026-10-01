@@ -2,6 +2,8 @@
 
 Wildlife-strike risk forecasting for airports: by ring, by week and by phase of flight.
 
+**© 2026 AeroBird. All rights reserved.** This repository is public for viewing only. No permission is granted to use, copy or redistribute any part of it. See [LICENSE](LICENSE).
+
 **Status: prototype.** Every figure on these pages is illustrative and generated for demonstration. Nothing here is a forecast or fit for operational use.
 
 ## What's in this repo
