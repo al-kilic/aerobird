@@ -76,8 +76,10 @@ a { color: inherit; }
 .side-foot a { color: var(--ink-2); }
 
 .main { min-width: 0; display: flex; flex-direction: column; }
-.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--rule); padding: 12px var(--pad); display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
-.bar-title { margin-right: auto; min-width: 0; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--rule); padding: 12px var(--pad); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px 18px; }
+.ctl-row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; }
+.bar-title { min-width: 0; }
+.bar-title p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bar-title h1 { font-family: var(--f-display); font-weight: 900; font-size: 26px; text-transform: uppercase; letter-spacing: .02em; line-height: 1; margin: 0; }
 .bar-title p { margin: 3px 0 0; font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .1em; color: var(--ink-3); text-transform: uppercase; }
 .wk { display: inline-flex; align-items: stretch; border: 1px solid var(--rule-2); background: var(--panel); }
@@ -150,9 +152,10 @@ a { color: inherit; }
 .mx .h { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .08em; color: var(--ink-2); text-transform: uppercase; text-align: center; padding: 4px 0; }
 .mx .h small { display: block; color: var(--ink-3); font-size: 8.5px; letter-spacing: .04em; }
 .mx .rl { font-family: var(--f-mono); font-size: 10px; color: var(--ink-2); display: flex; align-items: center; }
-.mx button { border: 0; cursor: pointer; height: 48px; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 20px; color: var(--bg); font-variant-numeric: tabular-nums; position: relative; transition: background-color .4s, transform .15s; }
+.mx button { border: 0; cursor: pointer; height: 48px; display: grid; place-items: center; font-family: var(--f-display); font-weight: 800; font-size: 20px; color: var(--ink); font-variant-numeric: tabular-nums; position: relative; transition: background-color .4s, transform .15s; }
 .mx button:hover { transform: scale(1.04); z-index: 1; }
 .mx button.lo { color: var(--ink); }
+.mx button.peak { box-shadow: inset 0 0 0 2px var(--ink); }
 .mx button.x { background: repeating-linear-gradient(45deg, var(--rx) 0 3px, var(--panel-2) 3px 7px) !important; color: var(--ink-2); font-size: 11px; font-family: var(--f-mono); }
 .mx button.sel { outline: 2px solid var(--ink); outline-offset: 2px; z-index: 2; }
 .mx button.peak::after { content: "PEAK"; position: absolute; top: 3px; right: 4px; font-family: var(--f-mono); font-size: 7.5px; letter-spacing: .1em; color: inherit; opacity: .85; font-weight: 600; }
@@ -402,7 +405,7 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
     <div class="apt">
       <div class="code">LROP <span>OTP</span></div>
       <div class="nm">Bucharest Henri Coandă<br><span class="dim">Elev 314 ft · RWY 08L/26R · 08R/26L</span></div>
-      <div class="add"><span>1 of 1 airports</span><span>+ Add</span></div>
+      <div class="add"><span>Prototype: LROP only</span></div>
     </div>
     <nav class="nav" aria-label="Console">
       <div class="nav-sec">Brief</div>
@@ -413,9 +416,9 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
       <a href="#outlook" data-v="outlook"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="12"/><path d="M1.5 6h13M5 1v3M11 1v3"/><path d="M4 9h2M7 9h2M10 9h2M4 12h2M7 12h2"/></svg>Outlook<span class="k">4</span></a>
       <a href="#species" data-v="species"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1.5 10.5 6 6.5l2 2 2-2 4.5 4"/><circle cx="8" cy="4" r="1"/></svg>Species<span class="k">5</span></a>
       <a href="#altitude" data-v="altitude"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 14V2M2 14h12"/><path d="M4.5 11.5h3M4.5 9h6M4.5 6.5h8M4.5 4h4"/></svg>Altitude<span class="k">6</span></a>
-      <div class="nav-sec">Operate</div>
+      <div class="nav-sec">Data</div>
       <a href="#log" data-v="log"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2.5" y="2.5" width="11" height="12"/><path d="M5.5 1.5h5v2.5h-5zM5 7.5l1.5 1.5L9 6.5M5 11.5h6"/></svg>Airside log<span class="k">7</span></a>
-      <a href="#evidence" data-v="evidence"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1.5 14.5 5 8 8.5 1.5 5z"/><path d="M1.5 8 8 11.5 14.5 8M1.5 11 8 14.5 14.5 11"/></svg>Evidence<span class="k">8</span></a>
+      <a href="#evidence" data-v="evidence"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 1.5 14.5 5 8 8.5 1.5 5z"/><path d="M1.5 8 8 11.5 14.5 8M1.5 11 8 14.5 14.5 11"/></svg>Data &amp; model<span class="k">8</span></a>
     </nav>
     <div class="side-foot">
       <span class="proto">Prototype · illustrative data · not a forecast</span>
@@ -431,15 +434,17 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
         <div class="lbl"><b id="wkLbl">W40</b><span id="wkDates"></span></div>
         <button type="button" id="wkNext" aria-label="Next week"><svg viewBox="0 0 12 12" fill="none"><path d="M4.5 2 8.5 6l-4 4" stroke="currentColor" stroke-width="1.6"/></svg></button>
       </div>
+      <div class="ctl-row">
       <div class="ctl"><span class="mono">Phase</span>
         <div class="seg mag" id="gPhase" role="group" aria-label="Phase of flight">
-          <button type="button" data-v="arr">Arrivals</button><button type="button" data-v="dep">Departures</button><button type="button" data-v="comb">All</button><button type="button" data-v="haz">Birds only</button>
+          <button type="button" data-v="arr">Arrivals</button><button type="button" data-v="dep">Departures</button><button type="button" data-v="comb">Combined</button><button type="button" data-v="haz">Bird index</button>
         </div>
       </div>
       <div class="ctl"><span class="mono">Time</span>
         <div class="seg" id="gTod" role="group" aria-label="Time of day">
-          <button type="button" data-v="all">24 h</button><button type="button" data-v="dawn">Dawn</button><button type="button" data-v="day">Day</button><button type="button" data-v="dusk">Dusk</button><button type="button" data-v="night">Night</button>
+          <button type="button" data-v="all">24 h avg</button><button type="button" data-v="dawn">Dawn</button><button type="button" data-v="day">Day</button><button type="button" data-v="dusk">Dusk</button><button type="button" data-v="night">Night</button>
         </div>
+      </div>
       </div>
     </header>
 
@@ -453,10 +458,10 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
       </div>
       <div class="grid">
         <section class="card span2">
-          <div class="card-h"><div><span class="q">When is it worst?</span><h2>Ring × time of day</h2><p id="mxSub"></p></div><div class="legend" id="mxLegend"></div></div>
+          <div class="card-h"><div><span class="q">When is risk highest?</span><h2>Ring × time of day</h2><p id="mxSub"></p></div><div class="legend" id="mxLegend"></div></div>
           <div class="mx" id="mx"></div>
-          <div class="sub-h" style="margin-top:6px"><span>Activity through the day</span><b id="hrSub"></b></div>
-          <svg class="ch" id="hrChart" viewBox="0 0 640 150"></svg>
+          <div class="sub-h" style="margin-top:6px"><span>Risk through the day</span><b id="hrSub"></b></div>
+          <svg class="ch" id="hrChart" viewBox="0 0 640 160"></svg>
         </section>
         <section class="card">
           <div class="card-h"><div><span class="q">Where is it?</span><h2>Risk rings</h2><p>Click a ring for detail.</p></div><a class="btn" href="#map">Map ↗</a></div>
@@ -471,13 +476,13 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
           <div class="wins" id="ovWins"></div>
         </section>
         <section class="card">
-          <div class="card-h"><div><span class="q">Which birds?</span><h2>Top hazards</h2><p id="tbSub"></p></div><a class="btn" href="#species">All ↗</a></div>
+          <div class="card-h"><div><span class="q">Which birds?</span><h2>Top species</h2><p id="tbSub"></p></div><a class="btn" href="#species">Register ↗</a></div>
           <div id="topBirds"></div>
         </section>
       </div>
       <div class="grid">
         <section class="card span2">
-          <div class="card-h"><div><span class="q">What should we do?</span><h2>Suggested focus</h2><p>Generated from the model for this week. Review before use.</p></div><a class="btn" href="#briefing">Briefing ↗</a></div>
+          <div class="card-h"><div><span class="q">What should we do?</span><h2>Suggested focus</h2><p>Generated from this week’s climatology. Review before use.</p></div><a class="btn" href="#briefing">Briefing ↗</a></div>
           <div class="focus" id="focus"></div>
         </section>
         <section class="card">
@@ -496,7 +501,7 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
             <div class="tools">
               <div class="seg sm" id="mRwy" role="group" aria-label="Runway in use"><button type="button" data-v="08">RWY 08</button><button type="button" data-v="26">RWY 26</button></div>
               <div class="seg sm" id="mZoom" role="group" aria-label="Range"><button type="button" data-v="30">30 NM</button><button type="button" data-v="12">12 NM</button></div>
-              <label class="mono" style="display:inline-flex;gap:6px;align-items:center;color:var(--ink-2);cursor:pointer"><input type="checkbox" id="mEv" checked style="accent-color:var(--sign)"> Evidence</label>
+              <label class="mono" style="display:inline-flex;gap:6px;align-items:center;color:var(--ink-2);cursor:pointer"><input type="checkbox" id="mEv" checked style="accent-color:var(--sign)"> Records</label>
             </div>
           </div>
           <svg class="ab-chart" id="mapChart" viewBox="0 0 600 600" role="img" aria-label="Chart of LROP with four risk rings"></svg>
@@ -519,12 +524,12 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
             <div><span class="k">Arrival</span><div class="n" id="rpArr">0</div><div class="bar"><i id="rpArrB"></i></div></div>
             <div><span class="k">Departure</span><div class="n" id="rpDep">0</div><div class="bar"><i id="rpDepB"></i></div></div>
           </div>
-          <div style="display:grid;gap:8px"><p class="sub-h"><span>What’s driving it</span><b id="rpCount"></b></p><div id="rpSp"></div><p class="note" id="rpDriver"></p></div>
-          <div style="display:grid;gap:8px"><p class="sub-h"><span>Evidence this week</span></p><div class="ev" id="rpEv"></div><p class="note ev-note" id="rpEvNote"></p></div>
+          <div style="display:grid;gap:8px"><p class="sub-h"><span>What drives it</span><b id="rpCount"></b></p><div id="rpSp"></div><p class="note" id="rpDriver"></p></div>
+          <div style="display:grid;gap:8px"><p class="sub-h"><span>Data behind this ring</span></p><div class="ev" id="rpEv"></div><p class="note ev-note" id="rpEvNote"></p></div>
         </aside>
       </div>
       <section class="card">
-        <div class="card-h"><div><span class="q">Along the centreline</span><h2 id="corrTitle"></h2><p id="corrSub"></p></div><div class="legend"><span><i style="background:var(--r3)"></i>Risk along path</span><span><i style="background:var(--rule-2)"></i>Birds present</span><span><i style="background:var(--mag);height:2px"></i>Aircraft altitude</span></div></div>
+        <div class="card-h"><div><span class="q">Along the centreline</span><h2 id="corrTitle"></h2><p id="corrSub"></p></div><div class="legend"><span><i style="background:var(--r3)"></i>Risk along path</span><span><i style="background:var(--rule-2)"></i>Bird presence</span><span><i style="background:var(--mag);height:2px"></i>Aircraft height</span></div></div>
         <svg class="ch" id="corrChart" viewBox="0 0 760 230"></svg>
         <p class="note" id="corrNote"></p>
       </section>
@@ -538,7 +543,7 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
       </section>
       <div class="grid">
         <section class="card span2">
-          <div class="card-h"><div><span class="q">Why that week?</span><h2>What drives each week</h2><p id="stSub"></p></div><div class="seg sm" id="stRing" role="group" aria-label="Ring"></div></div>
+          <div class="card-h"><div><span class="q">Why that week?</span><h2>Species mix by week</h2><p id="stSub"></p></div><div class="seg sm" id="stRing" role="group" aria-label="Ring"></div></div>
           <svg class="ch" id="stChart" viewBox="0 0 760 260"></svg>
           <div class="legend" id="stLegend"></div>
         </section>
@@ -560,7 +565,7 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
           </div>
         </div>
         <div class="tbl-wrap"><table class="tbl" id="spTbl"><thead></thead><tbody></tbody></table></div>
-        <p class="note">Size classes come from mean body mass: small under 100 g, medium under 500 g, large under 1.8 kg, very large above. Severity in the model is fitted to strike outcomes by mass, not assigned by class.</p>
+        <p class="note">Size class comes from mean body mass: small under 100 g, medium under 500 g, large under 1.8 kg, very large above. In the model, severity is a continuous function of mass (placeholder curve until strike records are loaded), so the class is a label only.</p>
       </section>
     </section>
 
@@ -578,7 +583,7 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
         <section class="card span2">
           <div class="card-h"><div><span class="q">Where does the aircraft meet the birds?</span><h2>Overlap by ring</h2><p>Share of radar-detected birds inside the altitude band an aircraft occupies in each ring.</p></div></div>
           <div class="tbl-wrap"><table class="tbl" id="ovTbl" style="min-width:560px"><thead><tr><th>Ring</th><th>Arrival band</th><th class="r">Birds in band</th><th>Departure band</th><th class="r">Birds in band</th></tr></thead><tbody></tbody></table></div>
-          <p class="note">Weather radar sees birds as biomass, not species. It is most reliable above roughly 200 m; the lowest bins mix birds with ground clutter and are shown hatched. Low-level resident birds are carried by checklists and airside logs instead.</p>
+          <p class="note">Weather radar sees birds as biomass, not species. The lowest bin (0–500 ft) mixes birds with ground clutter and is shown hatched. Low-level resident birds are carried by checklists and airside logs.</p>
         </section>
       </div>
     </section>
@@ -601,7 +606,7 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
           <div class="tools">
             <select class="sel" id="lgSp" aria-label="Filter species"></select>
             <select class="sel" id="lgAct" aria-label="Filter action"></select>
-            <button class="btn sign" type="button" id="lgAddBtn">+ Log a sighting</button>
+            <button class="btn sign" type="button" id="lgAddBtn">+ Add entry</button>
           </div>
         </div>
         <form class="addrow" id="lgForm" hidden>
@@ -624,17 +629,17 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
         <section class="card span2">
           <div class="card-h"><div><span class="q">Can I trust it?</span><h2>Data grade by ring and time</h2><p id="ggSub"></p></div></div>
           <div class="gg" id="gg"></div>
-          <div class="tbl-wrap"><table class="tbl" id="cvTbl" style="min-width:520px"><thead><tr><th>Ring</th><th class="r">Airside log entries</th><th class="r">Complete checklists</th><th class="r">Radar hours</th><th>Grade</th><th>Without logs</th></tr></thead><tbody></tbody></table></div>
+          <div class="tbl-wrap"><table class="tbl" id="cvTbl" style="min-width:520px"><thead><tr><th>Ring</th><th class="r">Airside log entries</th><th class="r">Complete checklists</th><th class="r">Radar hours</th><th>Grade</th><th>Grade w/o logs</th></tr></thead><tbody></tbody></table></div>
         </section>
         <section class="card">
           <div class="card-h"><div><span class="q">How grades work</span><h2>Grading rules</h2></div></div>
           <table class="tbl" style="min-width:0"><tbody>
-            <tr><td><span class="chip grade">A</span></td><td class="note">≥ 120 effective survey units. Shown normally, ±30% interval.</td></tr>
-            <tr><td><span class="chip grade">B</span></td><td class="note">≥ 60 units. Shown, ±55% interval.</td></tr>
+            <tr><td><span class="chip grade">A</span></td><td class="note">≥ 120 effective survey units. Scored, ±30% interval.</td></tr>
+            <tr><td><span class="chip grade">B</span></td><td class="note">≥ 60 units. Scored, ±55% interval.</td></tr>
             <tr><td><span class="chip grade">C</span></td><td class="note">≥ 25 units. Indicative only, ±90% interval.</td></tr>
             <tr><td><span class="chip x">None</span></td><td class="note">Below 25. No score is published. Never shown as low.</td></tr>
           </tbody></table>
-          <p class="note">Units: one per complete checklist, two per airside log entry, thirty when radar covered the week. Scaled by how much of each source falls in the selected time of day.</p>
+          <p class="note">Units: one per complete checklist, two per airside log entry, thirty when radar covered the week. Scaled by how much of each source falls in the selected time of day. Thresholds, weights and interval widths are prototype settings, not calibrated values.</p>
         </section>
       </div>
       <div class="grid">
@@ -646,14 +651,15 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
             <div><span class="k">Calibration κ</span><span class="n" style="color:var(--sign)">Pending</span></div>
             <div><span class="k">Validation</span><span class="n" style="color:var(--sign)">Not run</span></div>
           </div>
-          <p class="note"><b>Risk = κ · Σ hazard × severity × exposure.</b> Units: expected damaging strikes per 100,000 movements. Hazard is effort-normalised and zero-filled; severity is a logistic fit on log body mass; exposure is the share of each ring flown below the bird layer.</p>
+          <p class="note"><b>Risk = κ · Σ hazard × severity × exposure.</b> Units: expected damaging strikes per 100,000 movements. Until κ is calibrated, compare weeks and rings rather than reading absolute values. Hazard is effort-normalised, with zeros from complete checklists. Severity is a logistic curve on log body mass with placeholder coefficients. Exposure is an assumed share of each ring flown at bird-layer heights.</p>
         </section>
         <section class="card span2">
-          <div class="card-h"><div><span class="q">The ship gate</span><h2>Validation</h2></div></div>
+          <div class="card-h"><div><span class="q">Release gate</span><h2>Validation</h2></div></div>
           <div class="gate">
-            <b>No score goes live until both pass</b>
-            <span class="note">1. Rank correlation above 0.5 between predicted and observed damaging-strike rates on airports held out of training.</span>
-            <span class="note">2. A clear margin over a baseline that uses aircraft movements alone.</span>
+            <b>No score goes live until all three pass</b>
+            <span class="note">1. Rank correlation above 0.5 between predicted and observed damaging-strike rates on held-out airports.</span>
+            <span class="note">2. Positive skill over a movements-only baseline on the same held-out airports.</span>
+            <span class="note">3. Calibration slope between 0.8 and 1.2.</span>
           </div>
           <div class="tbl-wrap"><table class="tbl" style="min-width:520px"><thead><tr><th>Test</th><th>Target</th><th>Result</th><th>Status</th></tr></thead><tbody>
             <tr><td>Held-out rank correlation</td><td class="m">ρ &gt; 0.50</td><td class="m">—</td><td><span class="status pend">Not run</span></td></tr>
@@ -672,8 +678,8 @@ select.sel { background: var(--panel-2); border: 1px solid var(--rule-2); paddin
     <section class="view" id="v-briefing" data-title="Briefing">
       <div class="pp-tools">
         <button class="btn" type="button" id="bfCopy"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="4" width="8.5" height="8.5"/><path d="M2 10V1.5h8.5"/></svg>Copy as text</button>
-        <button class="btn" type="button" disabled title="Available in the product">Export PDF</button>
-        <button class="btn" type="button" disabled title="Available in the product">Send to crew room</button>
+        <button class="btn" type="button" disabled title="Not built yet. Use Copy as text.">Export PDF (planned)</button>
+        <button class="btn" type="button" disabled title="Not built yet. Use Copy as text.">Send to crew (planned)</button>
         <span class="mono dim" id="bfMsg" role="status"></span>
       </div>
       <article class="paper" id="paper"></article>
@@ -704,9 +710,9 @@ const ZONES = [
   { i: 2, label: "10–20 NM", r0: 10, r1: 20 }, { i: 3, label: "20–30 NM", r0: 20, r1: 30 }
 ];
 const TODS = ["dawn", "day", "dusk", "night"];
-const TOD_LABEL = { all: "24 h", dawn: "Dawn", day: "Day", dusk: "Dusk", night: "Night" };
+const TOD_LABEL = { all: "24 h avg", dawn: "Dawn", day: "Day", dusk: "Dusk", night: "Night" };
 const TOD_MIX = { dawn: .12, day: .58, dusk: .14, night: .16 };
-const PHASE_LABEL = { arr: "Arrivals", dep: "Departures", comb: "All movements", haz: "Birds only" };
+const PHASE_LABEL = { arr: "Arrivals", dep: "Departures", comb: "All movements", haz: "Bird index" };
 const PHASE_NOUN = { arr: "arrivals", dep: "departures", comb: "movements", haz: "" };
 
 const SP = [
@@ -956,6 +962,7 @@ const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS,
 const fmt = (n, d = 0) => Number(n).toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
 const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const BH = AB.BAND_HEX;
+const BF = BH.map(h => h + "8C");  /* ~55% band colour for large fills */
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /* links back to the site work locally and inside the artifact viewer */
@@ -1077,7 +1084,7 @@ function makeChart(svg, mini) {
     F["out" + k] = el("path", { d: `M${near[0] - pX * 3} ${near[1] - pY * 3}L${far[0] - pX * 3} ${far[1] - pY * 3}`, class: "flow", "stroke-width": 1.4, ...NSS }, flowG);
   });
   const altL = { E: [], W: [] };
-  if (!mini) [["E", 1], ["W", -1]].forEach(([k, s]) => [5, 10, 20].forEach(n => altL[k].push(lbl(flowG, C + s * dX * n * PX + pX * 16 * s, C + s * dY * n * PX + pY * 16 * s, "", 8, "mag"))));
+  if (!mini) [["E", 1], ["W", -1]].forEach(([k, s]) => [5, 10, 20].forEach((n, i) => { const o = (i === 1 ? -16 : 16) * s; altL[k].push(lbl(flowG, C + s * dX * n * PX + pX * o, C + s * dY * n * PX + pY * o, "", 8, "mag")); }));
   const rwyG = el("g", { "pointer-events": "none" }, svg);
   [-1, 1].forEach(s => { const cx = C + pX * s * 3.4, cy = C + pY * s * 3.4, L = 1.89 * PX / 2; el("line", { x1: cx - dX * L, y1: cy - dY * L, x2: cx + dX * L, y2: cy + dY * L, stroke: "#E5EBF1", "stroke-width": mini ? 2.5 : 3, ...NSS }, rwyG); });
   if (!mini) lbl(rwyG, C + 2, C + 15, "LROP", 9, "hi");
@@ -1163,7 +1170,7 @@ V.overview = (() => {
     $("#k1").innerHTML = `<span class="t">Airport risk · ${AB.PHASE_LABEL[ph]} · ${AB.TOD_LABEL[S.tod]}</span>
       <div class="row"><span class="v" id="k1v" style="color:${BH[ab]}">${fmt(a.v, 2)}</span>${bandChip(a.v, "air")}</div>
       <span class="s">${unit(ph)}${a.partial ? ` · <b>${4 - a.scored} ring${a.scored === 3 ? "" : "s"} without a score</b>` : ""}</span>
-      <div class="row">${deltaTxt(pct(a.v, a1.v))}<span class="mono dim">vs last week</span>${deltaTxt(pct(a.v, yr))}<span class="mono dim">vs year</span></div>`;
+      <div class="row">${deltaTxt(pct(a.v, a1.v))}<span class="mono dim">vs last week</span>${deltaTxt(pct(a.v, yr))}<span class="mono dim">vs year mean</span></div>`;
     const r = riskiest(w, ph), sn = AB.sun(w);
     if (r) {
       const rb = AB.band(r.v, ph);
@@ -1173,28 +1180,28 @@ V.overview = (() => {
     } else { $("#k2").innerHTML = `<span class="t">Riskiest window</span><span class="v txt">No score</span><span class="s">Not enough evidence this week.</span>`; }
     let ex = 0; for (let k = 0; k < 13; k++) ex += AB.expected(w + k, S.moves);
     $("#k3").style.setProperty("--kc", "var(--sign)");
-    $("#k3").innerHTML = `<span class="t">Expected damaging strikes · next 13 weeks</span><span class="v" style="color:var(--sign)">${fmt(ex, 2)}</span>
-      <span class="s">at <input class="inl" id="inMoves" type="number" min="0" step="100" value="${S.moves}" aria-label="Movements per week"> movements a week
-      <br>≈ <b>€${fmt(ex * S.cost, 0)}</b> at €<input class="inl" id="inCost" type="number" min="0" step="10000" value="${S.cost}" aria-label="Cost per damaging strike" style="width:9ch"> per event</span>
-      <span class="ex">Example inputs · enter your own figures</span>`;
+    $("#k3").innerHTML = `<span class="t">Illustrative expected strikes · next 13 weeks</span><span class="v" style="color:var(--sign)">${fmt(ex, 2)}</span>
+      <span class="s">at <input class="inl" id="inMoves" type="number" min="0" step="100" value="${S.moves}" aria-label="Movements per week"> movements a week (example)
+      <br>≈ <b>€${fmt(ex * S.cost, 0)}</b> at €<input class="inl" id="inCost" type="number" min="0" step="10000" value="${S.cost}" aria-label="Cost per damaging strike" style="width:9ch"> per damaging strike</span>
+      <span class="ex">Example inputs · output not calibrated</span>`;
     const bindIn = (id, key) => { const i = $(id); i.addEventListener("change", () => { S[key] = Math.max(0, +i.value || 0); update(); }); };
     bindIn("#inMoves", "moves"); bindIn("#inCost", "cost");
     const gr = AB.grade(w, S.tod), radarOn = w > 3;
     $("#k4").style.setProperty("--kc", gr.grade ? "var(--ink)" : "var(--rx)");
-    $("#k4").innerHTML = `<span class="t">Data confidence · ${AB.TOD_LABEL[S.tod]}</span><span class="v">${gr.grade ? "Grade " + gr.grade : "—"}</span>
+    $("#k4").innerHTML = `<span class="t">Data grade, lowest ring · ${AB.TOD_LABEL[S.tod]}</span><span class="v">${gr.grade ? "Grade " + gr.grade : "—"}</span>
       <span class="s"><b>${gr.scored} of 4</b> rings have enough evidence for a score.</span>
-      <div class="row"><span class="status ${radarOn ? "ok" : "off"}">Radar</span><span class="status ok">Checklists</span><span class="status ok">Airside logs</span><span class="status pend">Strikes</span></div>`;
+      <div class="row"><span class="status ${radarOn ? "ok" : "off"}">Radar</span><span class="status ok">Checklists</span><span class="status ok">Airside logs</span><span class="status pend">Strike history</span></div>`;
 
     // matrix
     let peak = null; for (let z = 0; z < 4; z++) for (const t of AB.TODS) { const d = AB.get(z, w, t); if (!d.unknown && (!peak || val(d) > peak.v)) peak = { z, t, v: val(d) }; }
-    let h = `<div></div>` + AB.TODS.map(t => `<div class="h">${AB.TOD_LABEL[t]}<small>${t === "dawn" ? AB.hhmm(sn.rise - .5) + "–" + AB.hhmm(sn.rise + 1.5) : t === "dusk" ? AB.hhmm(sn.set - 1.5) + "–" + AB.hhmm(sn.set + .5) : t === "day" ? "between" : "after dark"}</small></div>`).join("");
+    let h = `<div></div>` + AB.TODS.map(t => `<div class="h">${AB.TOD_LABEL[t]}<small>${t === "dawn" ? AB.hhmm(sn.rise - .5) + "–" + AB.hhmm(sn.rise + 1.5) : t === "dusk" ? AB.hhmm(sn.set - 1.5) + "–" + AB.hhmm(sn.set + .5) : t === "day" ? "daylight" : "after dark"}</small></div>`).join("");
     AB.ZONES.forEach((zz, z) => {
       h += `<div class="rl">${zz.label}</div>`;
       AB.TODS.forEach(t => {
         const d = AB.get(z, w, t), v = val(d), b = AB.band(v, ph);
         const isSel = z === S.zone && t === S.tod, isPk = peak && peak.z === z && peak.t === t;
         h += d.unknown ? `<button type="button" class="x${isSel ? " sel" : ""}" data-z="${z}" data-t="${t}" data-tip="<b>${zz.label} · ${AB.TOD_LABEL[t]}</b><br>No score: not enough evidence">NO SCORE</button>`
-          : `<button type="button" class="${b < 2 ? "lo" : ""}${isSel ? " sel" : ""}${isPk ? " peak" : ""}" style="background:${BH[b]}" data-z="${z}" data-t="${t}" data-tip="<b>${zz.label} · ${AB.TOD_LABEL[t]}</b><br>${fmt(v, 2)} ${unitShort()} · ${AB.BANDS[b]} · grade ${d.ev.grade}">${fmt(v, dec(v))}</button>`;
+          : `<button type="button" class="${b < 2 ? "lo" : ""}${isSel ? " sel" : ""}${isPk ? " peak" : ""}" style="background:${BF[b]}" data-z="${z}" data-t="${t}" data-tip="<b>${zz.label} · ${AB.TOD_LABEL[t]}</b><br>${fmt(v, 2)} ${unitShort()} · ${AB.BANDS[b]} · grade ${d.ev.grade}">${fmt(v, dec(v))}</button>`;
       });
     });
     $("#mx").innerHTML = h;
@@ -1219,7 +1226,7 @@ V.overview = (() => {
     $("#topBirds").innerHTML = top.map(t => {
       const sz = Math.max(5, Math.min(26, 4 + Math.sqrt(t.s.mass) * .38));
       const tr = Math.abs(t.tr4) < 3 ? "fl" : t.tr4 > 0 ? "up" : "dn";
-      return `<div class="sprow" data-tip="<b>${t.s.name}</b><br>${massTxt(t.s.mass)} · flocks to ${t.s.flock}× mean<br>${t.s.habitat}"><span class="mass"><i style="width:${sz}px;height:${sz}px;background:${t.s.radar ? "var(--cyan)" : AB.sizeClass(t.s.mass).k >= 2 ? "var(--ink)" : "var(--ink-2)"}"></i></span>
+      return `<div class="sprow" data-tip="<b>${t.s.name}</b><br>${massTxt(t.s.mass)} · flock factor ${t.s.flock}×<br>${t.s.habitat}"><span class="mass"><i style="width:${sz}px;height:${sz}px;background:${t.s.radar ? "var(--cyan)" : AB.sizeClass(t.s.mass).k >= 2 ? "var(--ink)" : "var(--ink-2)"}"></i></span>
         <div class="spn${t.s.radar ? " radar" : ""}"><b>${t.s.name}</b><i>${t.s.latin}</i></div>
         <div class="share"><span class="bar"><i style="width:${t.share.toFixed(1)}%"></i></span>${t.share.toFixed(0)}% · ${t.s.radar ? "~" : ""}${massTxt(t.s.mass)}</div>
         <span class="trend ${tr}">${tr === "fl" ? "■" : tr === "up" ? "▲" : "▼"} ${fmt(Math.abs(t.tr4), 0)}%<br><span class="dim">4 wk</span></span></div>`;
@@ -1232,9 +1239,9 @@ V.overview = (() => {
     const worseEnd = c08 >= c26 ? "08" : "26", worsePts = AB.corridor(worseEnd, "arr", w, rw.t), worstPt = worsePts.filter(p => p.s >= 2).reduce((a, p) => p.haz > a.haz ? p : a);
     const airLead = topSpecies(w, 12, "arr", "dawn").find(t => t.s.zones[0] >= .9) || lead;
     const items = [
-      ["Crews", `Brief <b>RWY ${worseEnd} arrivals at ${AB.TOD_LABEL[rw.t].toLowerCase()}</b>. Beyond the airfield, birds are most concentrated around ${Math.round(worstPt.s - .5)}–${Math.round(worstPt.s + .5)} NM on final, ${worstPt.near.text}, with the aircraft near ${fmt(Math.round(worstPt.alt / 100) * 100)} ft.`, `Expect ${lead.s.name.toLowerCase()}${lead.s.flock >= 5 ? " in flocks" : ""}. Risk on RWY ${worseEnd} is ${fmt(Math.abs(pct(Math.max(c08, c26), Math.min(c08, c26))), 0)}% above the opposite direction this week.`],
-      ["Wildlife team", `Prioritise <b>${airLead.s.name.toLowerCase()}</b> on the airfield at dawn, around sunrise ${AB.hhmm(AB.sun(w).rise)}.`, `It is the largest inner-ring contributor in the first hour of light. Habitat note: ${airLead.s.habitat}.`],
-      ["Planning", pk ? `<b>Next peak W${String(pk.peak).padStart(2, "0")}</b> (${AB.weekRange(pk.peak)}), ${fmt(pk.above * 100, 0)}% above the yearly average, driven by ${pk.lead.name.toLowerCase()}.` : `No seasonal peak in the coming weeks.`, pk ? `Window W${String(pk.from).padStart(2, "0")}–W${String(pk.to).padStart(2, "0")}. Worth extra patrol cover and a crew notice ahead of it.` : ""]
+      ["Crews", `Brief <b>RWY ${worseEnd} arrivals at ${AB.TOD_LABEL[rw.t].toLowerCase()}</b>. Beyond the airfield, bird presence peaks around ${Math.round(worstPt.s - .5)}–${Math.round(worstPt.s + .5)} NM on final, ${worstPt.near.text}, with the aircraft near ${fmt(Math.round(worstPt.alt / 100) * 100)} ft.`, `Likely species: ${lead.s.name.toLowerCase()}${lead.s.flock >= 5 ? " in flocks" : ""}. RWY ${worseEnd} scores ${fmt(Math.abs(pct(Math.max(c08, c26), Math.min(c08, c26))), 0)}% above the opposite direction this week.`],
+      ["Wildlife team", `Prioritise <b>${airLead.s.name.toLowerCase()}</b> on the airfield at dawn, around sunrise ${AB.hhmm(AB.sun(w).rise)}.`, `Top-ranked species with a strong inner-ring presence at dawn. Typical pattern: ${airLead.s.habitat}.`],
+      ["Planning", pk ? `<b>Next peak W${String(pk.peak).padStart(2, "0")}</b> (${AB.weekRange(pk.peak)}), ${fmt(pk.above * 100, 0)}% above the yearly average, driven by ${pk.lead.name.toLowerCase()}.` : `No seasonal peak in the coming weeks.`, pk ? `Window W${String(pk.from).padStart(2, "0")}–W${String(pk.to).padStart(2, "0")}. Consider extra patrol cover and a crew notice before it.` : ""]
     ];
     $("#focus").innerHTML = items.map(([who, a, b]) => `<div class="fitem"><span class="who">${who}</span><p>${a}<small>${b}</small></p></div>`).join("");
 
@@ -1248,7 +1255,7 @@ V.overview = (() => {
     bindWins("#ovWins");
   }
   function drawHourly() {
-    const svg = $("#hrChart"), W = 640, H = 150, L = 34, R = 10, T = 12, B = 22;
+    const svg = $("#hrChart"), W = 640, H = 160, L = 34, R = 10, T = 22, B = 22;
     const hr = AB.hourly(S.week, S.phase), mx = Math.max(...hr.vals) * 1.1 || 1;
     const x = h => L + h / 24 * (W - L - R), y = v => T + (1 - v / mx) * (H - T - B);
     let s = `<rect x="${x(0)}" y="${T}" width="${x(hr.rise) - x(0)}" height="${H - T - B}" fill="#0A1525"/><rect x="${x(hr.set)}" y="${T}" width="${x(24) - x(hr.set)}" height="${H - T - B}" fill="#0A1525"/>`;
@@ -1256,13 +1263,13 @@ V.overview = (() => {
     const d = "M" + pts.map(p => p[0].toFixed(1) + " " + p[1].toFixed(1)).join("L");
     const b = AB.band(Math.max(...hr.vals), S.phase, "air");
     s += `<path d="${d}L${x(23.5)} ${H - B}L${x(.5)} ${H - B}Z" fill="${BH[b]}" fill-opacity=".18"/><path d="${d}" fill="none" stroke="${BH[b]}" stroke-width="2"/>`;
-    [["SUNRISE", hr.rise], ["SUNSET", hr.set]].forEach(([t, h]) => { s += `<line x1="${x(h)}" x2="${x(h)}" y1="${T}" y2="${H - B}" stroke="#F5C518" stroke-dasharray="3 3"/><text class="ax" x="${x(h) + 4}" y="${T + 9}" fill="#F5C518" style="fill:#F5C518">${t} ${AB.hhmm(h)}</text>`; });
+    [["SUNRISE", hr.rise], ["SUNSET", hr.set]].forEach(([t, h]) => { s += `<line x1="${x(h)}" x2="${x(h)}" y1="${T}" y2="${H - B}" stroke="#F5C518" stroke-dasharray="3 3"/><text class="ax" x="${x(h)}" y="${T - 7}" text-anchor="middle" style="fill:#F5C518">${t} ${AB.hhmm(h)}</text>`; });
     for (let hh = 0; hh <= 24; hh += 3) s += `<text class="ax" x="${x(hh)}" y="${H - 6}" text-anchor="middle">${String(hh).padStart(2, "0")}</text>`;
     const im = hr.vals.indexOf(Math.max(...hr.vals));
-    s += `<circle cx="${pts[im][0]}" cy="${pts[im][1]}" r="4" fill="#FF3FA4"/><text class="ax" x="${pts[im][0]}" y="${pts[im][1] - 9}" text-anchor="middle" style="fill:#FF3FA4">PEAK ${String(im).padStart(2, "0")}:00–${String(im + 1).padStart(2, "0")}:00</text>`;
+    s += `<circle cx="${pts[im][0]}" cy="${pts[im][1]}" r="4" fill="#FF3FA4"/><text class="ax" x="${pts[im][0] + (im >= 12 ? -9 : 9)}" y="${pts[im][1] + 3}" text-anchor="${im >= 12 ? "end" : "start"}" style="fill:#FF3FA4">PEAK ${String(im).padStart(2, "0")}:00–${String(im + 1).padStart(2, "0")}:00</text>`;
     s += hr.vals.map((v, i) => `<rect x="${x(i)}" y="${T}" width="${x(1) - x(0)}" height="${H - T - B}" fill="transparent" data-tip="<b>${String(i).padStart(2, "0")}:00–${String(i + 1).padStart(2, "0")}:00</b><br>${fmt(v, 2)} ${unitShort()}"/>`).join("");
     svg.innerHTML = s;
-    $("#hrSub").textContent = `Local time · W${String(S.week).padStart(2, "0")} · airport ${unitShort()}`;
+    $("#hrSub").textContent = `Local time · W${String(S.week).padStart(2, "0")} · airport ${unitShort()} · interpolated from four time bands`;
   }
   function drawAhead() {
     const svg = $("#ahChart"), W = 640, H = 190, L = 34, R = 8, T = 20, B = 24, n = 16;
@@ -1274,7 +1281,7 @@ V.overview = (() => {
     const pk = ser.reduce((a, b) => b.a.v > a.a.v ? b : a);
     ser.forEach((it, i) => {
       const b = AB.band(it.a.v, S.phase, "air"), x = L + i * bw + 3, h = H - B - y(it.a.v);
-      s += `<rect x="${x}" y="${y(it.a.v)}" width="${bw - 6}" height="${h}" fill="${BH[b]}" fill-opacity="${i === 0 ? 1 : .72}" style="cursor:pointer" data-w="${it.w}" data-tip="<b>W${String(it.w).padStart(2, "0")} · ${AB.weekRange(it.w)}</b><br>${fmt(it.a.v, 2)} ${unitShort()} · ${AB.BANDS[b]}${it.a.partial ? "<br>Partial: a ring has no score" : ""}"/>`;
+      s += `<rect x="${x}" y="${y(it.a.v)}" width="${bw - 6}" height="${h}" fill="${BH[b]}" fill-opacity="${i === 0 ? .85 : .45}" style="cursor:pointer" data-w="${it.w}" data-tip="<b>W${String(it.w).padStart(2, "0")} · ${AB.weekRange(it.w)}</b><br>${fmt(it.a.v, 2)} ${unitShort()} · ${AB.BANDS[b]}${it.a.partial ? "<br>Partial total: at least one ring has no score" : ""}"/>`;
       s += `<text class="ax" x="${x + (bw - 6) / 2}" y="${H - 8}" text-anchor="middle" ${i === 0 ? 'style="fill:#E5EBF1"' : ""}>W${String(it.w).padStart(2, "0")}</text>`;
       if (it.a.partial) s += `<text class="ax" x="${x + (bw - 6) / 2}" y="${y(it.a.v) - 4}" text-anchor="middle" style="fill:#8E9CAC">*</text>`;
     });
@@ -1289,7 +1296,7 @@ V.overview = (() => {
 
 function winsHTML(wins) {
   if (!wins.length) return `<p class="note">No pronounced peaks for this selection.</p>`;
-  return wins.map(p => `<button type="button" class="win" data-w="${p.peak}"><span class="wd">W${String(p.from).padStart(2, "0")}–${String(p.to).padStart(2, "0")}<small>${AB.weekRange(p.from).split(" – ")[0]} – ${AB.weekRange(p.to).split(" – ")[1]}</small></span><span class="wt">${p.lead.name}<span>Peak W${String(p.peak).padStart(2, "0")} · strongest in ${AB.ZONES[p.ring].label}</span></span><span class="wp">+${fmt(p.above * 100, 0)}%</span></button>`).join("");
+  return wins.map(p => `<button type="button" class="win" data-w="${p.peak}"><span class="wd">W${String(p.from).padStart(2, "0")}–${String(p.to).padStart(2, "0")}<small>${AB.weekRange(p.from).split(" – ")[0]} – ${AB.weekRange(p.to).split(" – ")[1]}</small></span><span class="wt">${p.lead.name}<span>Peak W${String(p.peak).padStart(2, "0")} · strongest in ${AB.ZONES[p.ring].label}</span></span><span class="wp">+${fmt(p.above * 100, 0)}% vs year</span></button>`).join("");
 }
 function bindWins(sel) { $$(sel + " .win").forEach(b => b.addEventListener("click", () => { S.week = +b.dataset.w; render(); })); }
 
@@ -1304,15 +1311,15 @@ V.map = (() => {
   function update() {
     segState("#mRwy", S.rwy); segState("#mZoom", String(S.zoom));
     chart.update(); chart.applyScale();
-    $("#mapLegend").innerHTML = legendBands("ring", S.evidence ? `<span><i class="dt" style="background:#F5C518"></i>Airside log</span><span><i class="dt" style="background:#C9D4DE"></i>Checklist</span>` : "");
+    $("#mapLegend").innerHTML = legendBands("ring", S.evidence ? `<span><i class="dt" style="background:#F5C518"></i>Airside log</span><span><i class="dt" style="background:#C9D4DE"></i>eBird checklist</span>` : "");
     const d = cur(), ph = S.phase, v = val(d), b = AB.band(v, ph);
     $("#rpZone").textContent = AB.ZONES[S.zone].label;
     const band = $("#rpBand"), grade = $("#rpGrade"), num = $("#rpNum"), vv = $("#rpVal");
     if (d.unknown) {
-      band.textContent = "No score"; band.style.background = "var(--rx)"; band.style.color = "var(--ink)"; grade.textContent = "Insufficient";
+      band.textContent = "No score"; band.style.background = "var(--rx)"; band.style.color = "var(--ink)"; grade.textContent = "No grade";
       num.classList.add("unknown"); tw.set(vv, (tw.get(vv) || 0) + 1); vv.textContent = "No score"; vv.dataset.v = "0"; vv.style.color = "";
-      $("#rpUnit").textContent = "Not enough evidence this week. Shown as unknown, never as low.";
-      $("#rpCi").style.opacity = .25; $("#ciTxt").textContent = `${d.ev.radarH ? "" : "No radar coverage · "}${Math.round(d.ev.eff)} effective survey units, below the bar of 25`;
+      $("#rpUnit").textContent = "Not enough evidence this week. No score. This is not a low-risk reading.";
+      $("#rpCi").style.opacity = .25; $("#ciTxt").textContent = `${d.ev.radarH ? "" : "No radar coverage · "}${Math.round(d.ev.eff)} effective survey units, below the minimum of 25`;
     } else {
       band.textContent = AB.BANDS[b]; band.style.background = BH[b]; band.style.color = "var(--bg)"; grade.textContent = "Grade " + d.ev.grade;
       num.classList.remove("unknown"); vv.style.color = BH[b]; tween(vv, v, dec(v));
@@ -1322,7 +1329,7 @@ V.map = (() => {
       $("#rpCi").style.opacity = 1; $("#ciRange").style.left = lp(lo) + "%"; $("#ciRange").style.width = (lp(hi) - lp(lo)) + "%"; $("#ciPt").style.left = lp(v) + "%";
       const T = AB.thresholds(ph, "ring"), edges = [.01, ...T, 10];
       $("#ciBands").innerHTML = edges.slice(0, -1).map((e, i) => `<i style="background:${BH[i]};width:${(lp(edges[i + 1]) - lp(e)).toFixed(2)}%"></i>`).join("");
-      $("#ciTxt").textContent = `90% interval ${fmt(lo, 2)} – ${fmt(hi, 2)} · log scale`;
+      $("#ciTxt").textContent = `Interval ${fmt(lo, 2)} – ${fmt(hi, 2)} · width set by data grade · log scale`;
     }
     const mx = Math.max(d.arr, d.dep, .001);
     if (d.unknown) { ["#rpArr", "#rpDep"].forEach(s => { $(s).textContent = "—"; }); $("#rpArrB").style.width = $("#rpDepB").style.width = "0"; }
@@ -1335,11 +1342,11 @@ V.map = (() => {
       return `<div class="sprow" style="grid-template-columns:minmax(0,1fr) 46px 70px 58px"><div class="spn${p.s.radar ? " radar" : ""}"><b>${p.s.name}</b><i>${p.s.latin}</i></div><span class="mono dim" style="text-align:right">${p.s.radar ? "~" : ""}${massTxt(p.s.mass)}</span><div class="share"><span class="bar"><i style="width:${sh.toFixed(1)}%"></i></span>${sh.toFixed(0)}%</div>${spark(yr, 58, 22, S.week - 1, p.s.radar ? "#46D2F2" : "#8E9CAC")}</div>`;
     }).join("");
     const lead = top[0];
-    $("#rpDriver").innerHTML = d.unknown ? "Bird activity is still modelled here, but the evidence is too thin to publish a score."
-      : `<b>${lead.s.name}</b> drives ${(lead.val / tot * 100).toFixed(0)}% of this ring in W${String(S.week).padStart(2, "0")}: ${lead.s.habitat}.` + (ph === "dep" && S.zone >= 1 ? " Departures are mostly above the bird layer this far out." : ph === "arr" && S.zone === 1 ? " A 3° approach is still between 1,600 and 3,200 ft here." : "");
+    $("#rpDriver").innerHTML = d.unknown ? "Species activity is modelled here, but the evidence is too thin to publish a score."
+      : `<b>${lead.s.name}</b> accounts for ${(lead.val / tot * 100).toFixed(0)}% of this ring in W${String(S.week).padStart(2, "0")}. Typical pattern: ${lead.s.habitat}.` + (ph === "dep" && S.zone >= 1 ? " Departures are mostly above the assumed bird layer in this ring." : ph === "arr" && S.zone === 1 ? " On a 3° glidepath, aircraft are at 1,600 to 3,200 ft in this ring." : "");
     const ev = d.ev, rows = [["Airside wildlife log entries", ev.logs, 50, "#F5C518"], ["Complete eBird checklists", ev.checklists, 140, "#C9D4DE"], ["Radar hours (of 168)", ev.radarH, 168, "#46D2F2"]];
     $("#rpEv").innerHTML = rows.map(([k, n, m, c]) => `<div class="ev-row"><span>${k}</span><span class="n">${n}</span><span class="bar"><i style="width:${clamp(n / m * 100, 0, 100)}%;background:${c}"></i></span></div>`).join("");
-    $("#rpEvNote").innerHTML = d.unknown ? `Below the bar for a score this week.` : ev.logs > 0 && ev.gradeNoLogs !== ev.grade ? `Grade ${ev.grade} with airside logs. <b>Without them this ring would grade ${ev.gradeNoLogs || "as unknown"}.</b>` : ev.logs === 0 ? "No airside logs this far out. Radar and checklists carry this ring." : `Grade ${ev.grade}.`;
+    $("#rpEvNote").innerHTML = d.unknown ? `Below the minimum for a score this week.` : ev.logs > 0 && ev.gradeNoLogs !== ev.grade ? `Grade ${ev.grade} with airside logs. <b>Without them this ring would grade ${ev.gradeNoLogs || "none"}.</b>` : ev.logs === 0 ? "No airside logs this far out. Radar and checklists carry this ring." : `Grade ${ev.grade}.`;
     drawCorridor();
   }
   function drawCorridor() {
@@ -1347,25 +1354,25 @@ V.map = (() => {
     const dep = ph === "dep", svg = $("#corrChart"), W = 760, H = 230, L = 40, R = 52, T = 18, B = 30;
     const bw = (W - L - R) / 20, mxH = Math.max(...pts.map(p => p.haz)) * 1.12 || 1;
     const y = v => T + (1 - v / mxH) * (H - T - B), altMax = dep ? 15000 : 7000, ya = a => T + (1 - Math.min(a, altMax) / altMax) * (H - T - B);
-    let s = `<rect x="${L}" y="${ya(3000)}" width="${W - L - R}" height="${H - B - ya(3000)}" fill="#46D2F2" fill-opacity=".05"/><line x1="${L}" x2="${W - R}" y1="${ya(3000)}" y2="${ya(3000)}" stroke="#46D2F2" stroke-opacity=".5" stroke-dasharray="4 4"/><text class="ax" x="${W - R - 4}" y="${ya(3000) - 5}" text-anchor="end" style="fill:#46D2F2">BIRD LAYER ≈ 3,000 FT</text>`;
+    let s = `<rect x="${L}" y="${ya(3000)}" width="${W - L - R}" height="${H - B - ya(3000)}" fill="#46D2F2" fill-opacity=".05"/><line x1="${L}" x2="${W - R}" y1="${ya(3000)}" y2="${ya(3000)}" stroke="#46D2F2" stroke-opacity=".5" stroke-dasharray="4 4"/><text class="ax" x="${W - R - 4}" y="${ya(3000) - 5}" text-anchor="end" style="fill:#46D2F2">ASSUMED BIRD LAYER 3,000 FT</text>`;
     const worst = pts.filter(p => p.s >= 2).reduce((a, p) => p.haz > a.haz ? p : a);
     pts.forEach((p, i) => {
       const x = L + i * bw + 2;
       s += `<rect x="${x}" y="${y(p.haz)}" width="${bw - 4}" height="${H - B - y(p.haz)}" fill="#263340"/>`;
       if (ph !== "haz") s += `<rect x="${x}" y="${y(p.risk)}" width="${bw - 4}" height="${H - B - y(p.risk)}" fill="#F47D24"/>`;
-      s += `<rect x="${x}" y="${T}" width="${bw - 4}" height="${H - T - B}" fill="transparent" data-tip="<b>${fmt(p.s - .5, 0)}–${fmt(p.s + .5, 0)} NM ${dep ? "after take-off" : "before threshold"}</b><br>Aircraft ≈ ${fmt(Math.round(p.alt / 100) * 100)} ft<br>Birds ${fmt(p.haz, 1)} · risk ${fmt(p.risk, 1)}<br>Main source: ${p.near.text}"/>`;
+      s += `<rect x="${x}" y="${T}" width="${bw - 4}" height="${H - T - B}" fill="transparent" data-tip="<b>${fmt(p.s - .5, 0)}–${fmt(p.s + .5, 0)} NM ${dep ? "after take-off" : "before threshold"}</b><br>Aircraft ≈ ${fmt(Math.round(p.alt / 100) * 100)} ft<br>Bird index ${fmt(p.haz, 1)} · risk index ${fmt(p.risk, 1)}<br>Main source: ${p.near.text}"/>`;
       if (i % 2 === 0) s += `<text class="ax" x="${x + (bw - 4) / 2}" y="${H - 12}" text-anchor="middle">${i}</text>`;
     });
     s += `<text class="ax" x="${(W - R + L) / 2}" y="${H - 1}" text-anchor="middle">NM FROM ${dep ? "TAKE-OFF" : "THRESHOLD"}</text>`;
     const ap = pts.map((p, i) => `${(L + i * bw + bw / 2).toFixed(1)} ${ya(p.alt).toFixed(1)}`).join("L");
     s += `<path d="M${L} ${ya(0)}L${ap}" fill="none" stroke="#FF3FA4" stroke-width="2"/>`;
     [0, dep ? 5000 : 2000, dep ? 10000 : 4000, dep ? 15000 : 6000].forEach(a => { s += `<text class="ax" x="${W - R + 6}" y="${ya(a) + 3}" style="fill:#FF3FA4">${fmt(a)}</text>`; });
-    if (ph !== "haz") { const wi = pts.indexOf(worst), wx = L + wi * bw + bw / 2; s += `<line x1="${wx}" x2="${wx}" y1="${T - 8}" y2="${y(worst.haz)}" stroke="#E5EBF1" stroke-dasharray="2 3"/><text class="ax" x="${clamp(wx, 120, W - 140)}" y="${T - 10}" text-anchor="middle" style="fill:#E5EBF1">MOST BIRDS BEYOND THE AIRFIELD ${fmt(worst.s - .5, 0)}–${fmt(worst.s + .5, 0)} NM</text>`; }
+    if (ph !== "haz") { const wi = pts.indexOf(worst), wx = L + wi * bw + bw / 2; s += `<line x1="${wx}" x2="${wx}" y1="${T - 8}" y2="${y(worst.haz)}" stroke="#E5EBF1" stroke-dasharray="2 3"/><text class="ax" x="${clamp(wx, 120, W - 140)}" y="${T - 10}" text-anchor="middle" style="fill:#E5EBF1">BIRD PEAK BEYOND AIRFIELD ${fmt(worst.s - .5, 0)}–${fmt(worst.s + .5, 0)} NM</text>`; }
     svg.innerHTML = s;
     const endTxt = dep ? `Climb-out RWY ${S.rwy}` : `Final approach RWY ${S.rwy}`;
     $("#corrTitle").textContent = endTxt;
     $("#corrSub").textContent = `${dep ? (S.rwy === "08" ? "Departing east" : "Departing west") : (S.rwy === "08" ? "Arriving from the west" : "Arriving from the east")} · W${String(S.week).padStart(2, "0")} · ${AB.TOD_LABEL[S.tod]}${S.phase === "comb" ? " · showing arrivals" : ""}`;
-    $("#corrNote").innerHTML = ph === "haz" ? "Birds only: aircraft altitude is ignored." : `The orange bars are bird presence multiplied by how much of the flight path sits in the bird layer. Risk is highest close in, where the aircraft is lowest; the first two miles are the airfield itself, covered by the wildlife team. <b>Beyond that, birds are most concentrated at ${fmt(worst.s - .5, 0)}–${fmt(worst.s + .5, 0)} NM</b>, ${worst.near.text}, with the aircraft near ${fmt(Math.round(worst.alt / 100) * 100)} ft.`;
+    $("#corrNote").innerHTML = ph === "haz" ? "Bird index only: aircraft height is not applied." : `Grey bars show bird presence along the path. Orange bars weight it by how much of the flight path sits in the assumed bird layer. Risk is usually highest close in, where the aircraft is lowest. The first two miles are the airfield, covered by your wildlife team. <b>Beyond that, bird presence peaks at ${fmt(worst.s - .5, 0)}–${fmt(worst.s + .5, 0)} NM</b>, ${worst.near.text}, with the aircraft near ${fmt(Math.round(worst.alt / 100) * 100)} ft.`;
   }
   return { mount, update };
 })();
@@ -1398,11 +1405,11 @@ V.outlook = (() => {
     const ph = S.phase;
     for (let w = 1; w <= 52; w++) {
       const a = AB.airport(w, S.tod, ph), c = cells[0][w], b = AB.band(a.v, ph, "air");
-      c.style.backgroundColor = BH[b]; c.classList.toggle("wk", w === S.week);
-      c.setAttribute("data-tip", `<b>Airport · W${String(w).padStart(2, "0")}</b><br>${AB.weekRange(w)}<br>${fmt(a.v, 2)} ${unitShort()} · ${AB.BANDS[b]}${a.partial ? "<br>Partial total" : ""}`);
+      c.style.backgroundColor = BF[b]; c.classList.toggle("wk", w === S.week);
+      c.setAttribute("data-tip", `<b>Airport · W${String(w).padStart(2, "0")}</b><br>${AB.weekRange(w)}<br>${fmt(a.v, 2)} ${unitShort()} · ${AB.BANDS[b]}${a.partial ? "<br>Partial total: at least one ring has no score" : ""}`);
       AB.ZONES.forEach(z => {
         const d = AB.get(z.i, w, S.tod), cc = cells[z.i + 1][w], v = val(d), bb = AB.band(v, ph);
-        cc.classList.toggle("x", d.unknown); if (!d.unknown) cc.style.backgroundColor = BH[bb];
+        cc.classList.toggle("x", d.unknown); if (!d.unknown) cc.style.backgroundColor = BF[bb];
         cc.classList.toggle("wk", w === S.week); cc.classList.toggle("sel", w === S.week && z.i === S.zone);
         cc.setAttribute("data-tip", d.unknown ? `<b>${z.label} · W${String(w).padStart(2, "0")}</b><br>No score` : `<b>${z.label} · W${String(w).padStart(2, "0")}</b><br>${fmt(v, 2)} ${unitShort()} · ${AB.BANDS[bb]} · grade ${d.ev.grade}`);
       });
@@ -1448,7 +1455,7 @@ V.outlook = (() => {
 
 /* ── SPECIES ── */
 V.species = (() => {
-  const COLS = [["name", "Species"], ["mass", "Mass"], ["size", "Size class"], ["flock", "Flocking"], ["peak", "Peak"], ["rings", "Main rings"], ["share", "Share now"], ["trend", "4-week trend"], ["year", "Year"]];
+  const COLS = [["name", "Species"], ["mass", "Mass"], ["size", "Size class"], ["flock", "Flock factor"], ["peak", "Peak week"], ["rings", "Main rings"], ["share", "Share, this wk"], ["trend", "4-week trend"], ["year", "Year"]];
   function mount() {
     $("#spTbl thead").innerHTML = "<tr>" + COLS.map(([k, t]) => k === "year" || k === "rings" || k === "size" ? `<th>${t}</th>` : `<th class="${["mass", "flock", "share", "trend"].includes(k) ? "r" : ""}"><button type="button" data-k="${k}">${t}<span></span></button></th>`).join("") + "</tr>";
     $$("#spTbl th button").forEach(b => b.addEventListener("click", () => { const k = b.dataset.k; S.spSort = { k, dir: S.spSort.k === k ? -S.spSort.dir : (k === "name" || k === "peak" ? 1 : -1) }; update(); }));
@@ -1502,14 +1509,14 @@ V.species = (() => {
     const where = AB.FEAT.filter(f => Object.keys(f.g).some(g => (s.groups[g] || 0) * f.g[g] >= .3)).map(f => f.name);
     $("#drawer").innerHTML = `<button class="btn dr-close" id="drClose" type="button" aria-label="Close">Close ✕</button>
       <div><span class="mono" style="color:var(--mag)">${s.radar ? "Radar layer" : "Species"} · ${s.code}</span><h2 class="dr-name">${s.name}</h2><p class="dr-lat">${s.latin}</p></div>
-      <div class="facts"><div><span class="k">Mean mass</span><span class="n">${s.radar ? "~" : ""}${massTxt(s.mass)}</span></div><div><span class="k">Size class</span><span class="n" style="font-size:19px">${c.label}</span></div><div><span class="k">Flocking</span><span class="n">${s.flock}×</span></div>
+      <div class="facts"><div><span class="k">Mean mass</span><span class="n">${s.radar ? "~" : ""}${massTxt(s.mass)}</span></div><div><span class="k">Size class</span><span class="n" style="font-size:19px">${c.label}</span></div><div><span class="k">Flock factor</span><span class="n">${s.flock}×</span></div>
         <div><span class="k">Severity weight</span><span class="n">${fmt(AB.V(s.mass), 2)}</span></div><div><span class="k">Share · arr</span><span class="n">${shA.toFixed(1)}%</span></div><div><span class="k">Share · dep</span><span class="n">${shD.toFixed(1)}%</span></div></div>
       <div style="display:grid;gap:8px"><p class="sub-h"><span>Seasonality by ring · birds per survey-hour</span></p><svg class="ch" viewBox="0 0 ${W} ${H}">${sv}</svg>
         <div class="legend">${AB.ZONES.map((z, k) => `<span><i style="background:${cols[k]};height:2px"></i>${z.label}</span>`).join("")}</div></div>
       <div style="display:grid;gap:8px"><p class="sub-h"><span>Time of day</span><b>relative activity</b></p>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-items:end;height:90px">${AB.TODS.map((t, ti) => `<div style="display:grid;gap:4px;align-content:end;height:100%"><div style="height:${(todV[ti] / tmx * 64).toFixed(0)}px;background:${t === "night" ? "var(--cyan)" : "var(--ink-2)"};transition:height .5s"></div><span class="mono dim" style="text-align:center">${AB.TOD_LABEL[t]}</span></div>`).join("")}</div></div>
-      <div style="display:grid;gap:6px"><p class="sub-h"><span>Where and why</span></p><p class="note" style="font-size:14px;color:var(--ink)">${s.habitat[0].toUpperCase() + s.habitat.slice(1)}.</p>${where.length ? `<p class="note">Linked sources on the map: ${where.join(", ")}.</p>` : ""}</div>
-      <p class="note" style="border-top:1px solid var(--rule);padding-top:12px">${s.radar ? "Radar detects these birds as biomass. Species, mass and flocking are assumed for small passerines." : "Flight altitude is not modelled per species. eBird records where a bird was seen, not how high. Altitude comes from radar, for all birds combined."} Severity weight is relative to a 1 kg bird, from a logistic fit on body mass.</p>`;
+      <div style="display:grid;gap:6px"><p class="sub-h"><span>Where and why</span><b>illustrative site notes</b></p><p class="note" style="font-size:14px;color:var(--ink)">${s.habitat[0].toUpperCase() + s.habitat.slice(1)}.</p>${where.length ? `<p class="note">Nearby sources on the map: ${where.join(", ")}.</p>` : ""}</div>
+      <p class="note" style="border-top:1px solid var(--rule);padding-top:12px">${s.radar ? "Radar detects these birds as biomass. Species, mass and flocking are assumed for small passerines." : "Flight altitude is not modelled per species. eBird records where a bird was seen, not how high. Altitude comes from radar, for all birds combined."} Severity weight is relative to a 1 kg bird, from a logistic curve on body mass (placeholder coefficients).</p>`;
     $("#drClose").addEventListener("click", closeDrawer);
   }
   return { mount, update };
@@ -1621,7 +1628,7 @@ V.log = (() => {
     $("#asChart").innerHTML = sc;
     // table
     const f = all.filter(e => (!S.lgSp || e.sp.code === S.lgSp) && (!S.lgAct || e.action === S.lgAct));
-    $("#lgSub").textContent = `${f.length} of ${all.length} entries · illustrative records, plus anything you log here (saved in this browser only)`;
+    $("#lgSub").textContent = `${f.length} of ${all.length} entries · illustrative records, plus anything you log here (saved in this browser only; does not change scores)`;
     const ac = a => a.startsWith("Dispersed") ? "d" : a.startsWith("Reported") ? "a" : "m";
     $("#lgTbl tbody").innerHTML = f.map(e => `<tr class="${e.mine && Date.now() - e.ts < 4000 ? "new-row" : ""}"><td class="m">${AB.DAYS[e.day]}</td><td class="m">${e.time}</td><td>${e.area.label}</td><td><div class="spn"><b>${e.sp.name}</b><i>${e.sp.latin}</i></div></td><td class="r m">${e.count}</td><td><span class="act ${ac(e.action)}">${e.action}</span></td><td class="m">${e.patrol}</td></tr>`).join("") || `<tr><td colspan="7" class="note">No entries match these filters.</td></tr>`;
   }
@@ -1636,27 +1643,26 @@ V.evidence = (() => {
     let ck = 0, lg = 0; AB.ZONES.forEach(z => { const e = AB.get(z.i, w, "all").ev; ck += e.checklists; lg += e.logs; });
     const card = (t, st, sc, p, meta) => `<section class="card"><span class="status ${sc}">${st}</span><h3>${t}</h3><p>${p}</p><div class="meta">${meta}</div></section>`;
     $("#srcCards").innerHTML =
-      card("Weather radar", radarOn ? "Covered" : "Outage", radarOn ? "ok" : "off", "Bird density, speed and direction in 500 ft bins, day and night.", `This week <b>${radarOn ? "168 h" : "0 h"}</b><br>Network OPERA · Bucureşti radar<br>Licence CC BY 4.0`) +
-      card("Citizen science", "Covered", "ok", "Complete checklists, divided by survey hours, with genuine zeros.", `This week <b>${fmt(ck)} checklists</b><br>Source eBird<br>Thin inside 5 NM`) +
-      card("Airside logs", "Connected", "ok", "Your wildlife team’s patrols. The best data for the inner ring.", `This week <b>${fmt(lg)} entries</b><br>Source operator log<br>Stays private to you`) +
-      card("Strike history", "Calibration pending", "warn", "Reported strikes with species, phase and damage. Used to fit severity and test the model.", `Records <b>not yet loaded</b><br>National + public databases<br>Required before go-live`);
+      card("Weather radar", radarOn ? "Covered" : "Outage", radarOn ? "ok" : "off", "Bird density by altitude in 500 ft bins, day and night.", `This week <b>${radarOn ? "168 h" : "0 h"}</b><br>European weather-radar bird profiles<br>Sample data`) +
+      card("Citizen science", "Covered", "ok", "Complete checklists divided by survey hours, so zeros count.", `This week <b>${fmt(ck)} checklists</b><br>Source eBird<br>Thin inside 5 NM`) +
+      card("Airside logs", "Sample data", "ok", "Patrol and dispersal logs from your wildlife team. The best data inside 5 NM.", `This week <b>${fmt(lg)} entries</b><br>Source: operator log<br>Stays private to you`) +
+      card("Strike history", "Not loaded", "warn", "Reported strikes with species, phase and damage. Needed to calibrate severity and test the model.", `Records <b>not yet loaded</b><br>Reported strike records<br>Required before any score goes live`);
     $("#ggSub").textContent = `W${String(w).padStart(2, "0")} · ${AB.weekRange(w)}`;
-    let h = `<div></div>` + ["24 h", ...AB.TODS.map(t => AB.TOD_LABEL[t])].map(t => `<div class="h">${t}</div>`).join("");
-    AB.ZONES.forEach(z => { h += `<div class="rl">${z.label}</div>`; ["all", ...AB.TODS].forEach(t => { const e = AB.get(z.i, w, t).ev; h += `<div class="g ${e.grade || "X"}" data-tip="<b>${z.label} · ${AB.TOD_LABEL[t]}</b><br>${Math.round(e.eff)} effective units">${e.grade || "NONE"}</div>`; }); });
+    let h = `<div></div>` + ["24 h avg", ...AB.TODS.map(t => AB.TOD_LABEL[t])].map(t => `<div class="h">${t}</div>`).join("");
+    AB.ZONES.forEach(z => { h += `<div class="rl">${z.label}</div>`; ["all", ...AB.TODS].forEach(t => { const e = AB.get(z.i, w, t).ev; h += `<div class="g ${e.grade || "X"}" data-tip="<b>${z.label} · ${AB.TOD_LABEL[t]}</b><br>${Math.round(e.eff)} effective survey units">${e.grade || "NONE"}</div>`; }); });
     $("#gg").innerHTML = h;
     $("#cvTbl tbody").innerHTML = AB.ZONES.map(z => { const e = AB.get(z.i, w, "all").ev; return `<tr><td class="m">${z.label}</td><td class="r m">${e.logs}</td><td class="r m">${e.checklists}</td><td class="r m">${e.radarH}</td><td>${e.grade ? `<span class="chip grade">${e.grade}</span>` : `<span class="chip x">None</span>`}</td><td>${e.gradeNoLogs ? `<span class="chip out">${e.gradeNoLogs}</span>` : `<span class="chip x">None</span>`}</td></tr>`; }).join("");
     const r = AB.rng(500 + w), hx = () => Array.from({ length: 4 }, () => Math.floor(r() * 65536).toString(16).padStart(4, "0")).join("");
     const mon = AB.weekStart(w), d = n => { const x = new Date(mon.getTime() + n * 864e5); return `${AB.dstr(x)} 03:${String(10 + Math.floor(r() * 40)).padStart(2, "0")}Z`; };
     const rows = [
-      ["Weather radar profiles", "OPERA · Bucureşti", `W${String(w).padStart(2, "0")}`, radarOn ? fmt(168 * 12) : "0", d(7), radarOn ? ["ok", "Ingested"] : ["off", "Outage"]],
-      ["Complete checklists", "eBird", `W${String(w).padStart(2, "0")}`, fmt(ck), d(7), ["ok", "Ingested"]],
-      ["Airside wildlife log", "Operator · patrols P1–P3", `W${String(w).padStart(2, "0")}`, fmt(lg), d(7), ["ok", "Ingested"]],
-      ["Species traits", "Published body-mass data", "Static", "19", "Reference", ["ok", "Loaded"]],
-      ["Land cover", "Copernicus", "2024", "—", "Reference", ["ok", "Loaded"]],
-      ["Strike records", "National + public databases", "—", "—", "—", ["warn", "Pending"]]
+      ["Weather radar profiles", "OPERA · Bucureşti", `W${String(w).padStart(2, "0")}`, radarOn ? fmt(168 * 12) : "0", "Weekly (sample)", radarOn ? ["ok", "Sample"] : ["off", "Outage"]],
+      ["Complete checklists", "eBird", `W${String(w).padStart(2, "0")}`, fmt(ck), "Weekly (sample)", ["ok", "Sample"]],
+      ["Airside wildlife log", "Operator · patrols P1–P3", `W${String(w).padStart(2, "0")}`, fmt(lg), "Weekly (sample)", ["ok", "Sample"]],
+      ["Species traits", "Body-mass table (illustrative)", "Static", "19", "Reference", ["ok", "Sample"]],
+      ["Strike records", "Reported strikes", "—", "—", "—", ["warn", "Not loaded"]]
     ];
-    $("#pvTbl tbody").innerHTML = rows.map(x => `<tr><td>${x[0]}</td><td class="m">${x[1]}</td><td class="m">${x[2]}</td><td class="r m">${x[3]}</td><td class="m">${x[4]}</td><td class="m dim">${x[5][1] === "Pending" ? "—" : "sha256:" + hx()}</td><td><span class="status ${x[5][0]}">${x[5][1]}</span></td></tr>`).join("");
-    $("#pvSub").textContent = "Every score records the inputs and model version that produced it. Illustrative entries.";
+    $("#pvTbl tbody").innerHTML = rows.map(x => `<tr><td>${x[0]}</td><td class="m">${x[1]}</td><td class="m">${x[2]}</td><td class="r m">${x[3]}</td><td class="m">${x[4]}</td><td class="m dim">${x[5][1] === "Not loaded" ? "—" : "illustrative"}</td><td><span class="status ${x[5][0]}">${x[5][1]}</span></td></tr>`).join("");
+    $("#pvSub").textContent = "Each score will record the inputs and model version that produced it. Entries below are illustrative.";
   }
   return { mount, update };
 })();
@@ -1667,7 +1673,7 @@ V.briefing = (() => {
   function mount() {
     $("#bfCopy").addEventListener("click", () => {
       const done = m => { $("#bfMsg").textContent = m; setTimeout(() => { $("#bfMsg").textContent = ""; }, 2400); };
-      try { navigator.clipboard.writeText(text).then(() => done("Copied"), () => { selectPaper(); done("Selected · press ⌘C"); }); } catch (e) { selectPaper(); done("Selected · press ⌘C"); }
+      try { navigator.clipboard.writeText(text).then(() => done("Copied"), () => { selectPaper(); done("Selected. Press Ctrl/⌘ + C"); }); } catch (e) { selectPaper(); done("Selected. Press Ctrl/⌘ + C"); }
     });
   }
   function selectPaper() { const r = document.createRange(); r.selectNodeContents($("#paper")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
@@ -1679,17 +1685,17 @@ V.briefing = (() => {
     const ab = AB.band(a.v, "arr", "air"), db = AB.band(dp.v, "dep", "air");
     const c08 = AB.corridor("08", "arr", w, rw ? rw.t : "dusk").reduce((s, p) => s + p.risk, 0), c26 = AB.corridor("26", "arr", w, rw ? rw.t : "dusk").reduce((s, p) => s + p.risk, 0);
     const ringRows = AB.ZONES.map(z => { const d = AB.get(z.i, w, "all"); return d.unknown ? `<tr><td>${z.label}</td><td>—</td><td>—</td><td>No score</td><td>—</td></tr>` : `<tr><td>${z.label}</td><td>${fmt(d.arr, 2)}</td><td>${fmt(d.dep, 2)}</td><td><span class="sw" style="background:${BH[AB.band(AB.metric(d, ph), ph)]}"></span>${AB.BANDS[AB.band(AB.metric(d, ph), ph)]}</td><td>${d.ev.grade}</td></tr>`; }).join("");
-    const sum = `${AB.BANDS[ab]} arrival risk and ${AB.BANDS[db].toLowerCase()} departure risk this week (${fmt(a.v, 2)} and ${fmt(dp.v, 2)} damaging strikes per 100,000 movements). ${rw ? `The riskiest window is ${AB.ZONES[rw.z].label} at ${AB.TOD_LABEL[rw.t].toLowerCase()}.` : ""} ${top[0].s.name} leads the species list.`;
+    const sum = `${AB.BANDS[ab]} arrival risk and ${AB.BANDS[db].toLowerCase()} departure risk this week (${fmt(a.v, 2)} per 100,000 arrivals and ${fmt(dp.v, 2)} per 100,000 departures). ${rw ? `The riskiest window is ${AB.ZONES[rw.z].label} at ${AB.TOD_LABEL[rw.t].toLowerCase()}.` : ""} ${top[0].s.name} leads the species ranking.`;
     $("#paper").innerHTML = `
       <header class="pp-head"><div><span class="k">Wildlife hazard briefing · prototype</span><h2>LROP · Week ${String(w).padStart(2, "0")}</h2></div>
         <div class="pp-meta">${AB.weekRange(w)} 2026<br>Sunrise <b>${AB.hhmm(sn.rise)}</b> · sunset <b>${AB.hhmm(sn.set)}</b> local<br>Model v0.1 · data grade <b>${gr.grade || "—"}</b><br>Illustrative data · not for operational use</div></header>
       <section class="pp-sec"><h3>Summary</h3><div><p class="lead">${sum}</p></div></section>
-      <section class="pp-sec"><h3>Risk by ring</h3><div><table class="pp-tbl"><thead><tr><th>Ring</th><th>Arrivals</th><th>Departures</th><th>${AB.PHASE_LABEL[ph]}</th><th>Grade</th></tr></thead><tbody>${ringRows}</tbody></table><p style="font-size:12px;color:var(--p-ink-2);margin-top:6px">Damaging strikes per 100,000 movements, 24-hour average.</p></div></section>
+      <section class="pp-sec"><h3>Risk by ring</h3><div><table class="pp-tbl"><thead><tr><th>Ring</th><th>Arrivals</th><th>Departures</th><th>${AB.PHASE_LABEL[ph]}</th><th>Grade</th></tr></thead><tbody>${ringRows}</tbody></table><p style="font-size:12px;color:var(--p-ink-2);margin-top:6px">Damaging strikes per 100,000 arrivals or departures, 24-hour average.</p></div></section>
       <section class="pp-sec"><h3>Timing</h3><div><p>${rw ? `Highest exposure at <b>${AB.TOD_LABEL[rw.t].toLowerCase()}</b>${rw.t === "dawn" ? `, around sunrise ${AB.hhmm(sn.rise)}` : rw.t === "dusk" ? `, around sunset ${AB.hhmm(sn.set)}` : ""}, in the ${AB.ZONES[rw.z].label} ring.` : "No scored window this week."} RWY ${c08 >= c26 ? "08" : "26"} arrivals carry ${fmt(Math.abs(pct(Math.max(c08, c26), Math.min(c08, c26))), 0)}% more risk than the opposite direction.</p></div></section>
-      <section class="pp-sec"><h3>Species to watch</h3><div><table class="pp-tbl"><thead><tr><th>Species</th><th>Mass</th><th>Share</th><th>Where</th></tr></thead><tbody>${top.map(t => `<tr><td><b>${t.s.name}</b><br><span class="lat">${t.s.latin}</span></td><td>${t.s.radar ? "~" : ""}${massTxt(t.s.mass)}</td><td>${t.share.toFixed(0)}%</td><td style="font-size:12.5px">${t.s.habitat}</td></tr>`).join("")}</tbody></table></div></section>
+      <section class="pp-sec"><h3>Species to watch</h3><div><table class="pp-tbl"><thead><tr><th>Species</th><th>Mass</th><th>Share</th><th>Where (illustrative)</th></tr></thead><tbody>${top.map(t => `<tr><td><b>${t.s.name}</b><br><span class="lat">${t.s.latin}</span></td><td>${t.s.radar ? "~" : ""}${massTxt(t.s.mass)}</td><td>${t.share.toFixed(0)}%</td><td style="font-size:12.5px">${t.s.habitat}</td></tr>`).join("")}</tbody></table></div></section>
       <section class="pp-sec"><h3>Outlook</h3><div><p>${nxt.map(n => `W${String(n.w).padStart(2, "0")} <b>${fmt(n.v, 2)}</b>`).join(" · ")}</p>${pk ? `<p>Next peak <b>W${String(pk.peak).padStart(2, "0")}</b> (${AB.weekRange(pk.peak)}), ${fmt(pk.above * 100, 0)}% above the yearly average, driven by ${pk.lead.name.toLowerCase()}.</p>` : ""}</div></section>
       <section class="pp-sec"><h3>Notes</h3><div>${$$("#focus .fitem").map(f => `<p><b>${f.querySelector(".who").textContent}.</b> ${f.querySelector("p").childNodes[0] ? f.querySelector("p").innerHTML.replace(/<small>.*<\/small>/, "") : ""}</p>`).join("")}</div></section>
-      <section class="pp-sec"><h3>Data and limits</h3><div><p style="font-size:13px;color:var(--p-ink-2)">Seasonal climatology, not a live forecast. Scores are expected damaging strikes per 100,000 movements with intervals set by data grade. Rings without enough evidence show no score. κ is not yet calibrated against strike records and the model has not passed validation. Prototype on illustrative data.</p></div></section>
+      <section class="pp-sec"><h3>Data and limits</h3><div><p style="font-size:13px;color:var(--p-ink-2)">Seasonal climatology, not a live forecast. Scores are expected damaging strikes per 100,000 movements, with an interval whose width is set by data grade. Rings without enough evidence show no score. κ is not calibrated against strike records and the model has not passed validation, so compare weeks and rings rather than reading absolute values. Illustrative data.</p></div></section>
       <footer class="pp-foot">AeroBird · decision support for wildlife hazard management · not a certified safety product</footer>`;
     text = $("#paper").innerText;
   }
@@ -1704,7 +1710,7 @@ $("#wkPrev").addEventListener("click", () => { S.week = AB.wrapW(S.week - 1); re
 $("#wkNext").addEventListener("click", () => { S.week = AB.wrapW(S.week + 1); render(); });
 
 const VIEWS = ["overview", "briefing", "map", "outlook", "species", "altitude", "log", "evidence"];
-const SUBS = { overview: "This week at a glance", briefing: "Ready to share", map: "Rings, flight paths, evidence", outlook: "The year ahead", species: "Who is out there", altitude: "Radar height profiles", log: "Your wildlife team", evidence: "Sources, grades, provenance" };
+const SUBS = { overview: "This week at a glance", briefing: "Copy as text", map: "Rings, approach and climb-out paths", outlook: "52-week climatology", species: "Species by risk share", altitude: "Radar height profiles", log: "Wildlife team entries", evidence: "Sources, grades, validation" };
 const mounted = {};
 function route() {
   const v = (location.hash || "#overview").slice(1);
