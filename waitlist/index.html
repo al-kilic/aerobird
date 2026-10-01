@@ -1,4 +1,7 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AeroBird</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B0E11'/%3E%3Ccircle cx='16' cy='16' r='11.5' fill='none' stroke='%23E7EAE3' stroke-width='1.8' stroke-dasharray='52 20' transform='rotate(-30 16 16)'/%3E%3Cpath d='M7.5 19 L14 14 L16 16.2 L18 14 L24.5 19' fill='none' stroke='%23FF3FA4' stroke-width='2.6' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta name="description" content="AeroBird forecasts wildlife-strike risk around airports by zone, week and phase of flight.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -95,6 +98,12 @@ body[data-nav="sign"]  .nav { background: color-mix(in srgb, var(--sign) 90%, tr
 .nav-links { display: flex; gap: 22px; margin-left: auto; }
 .nav-links a { text-decoration: none; font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .78; }
 .nav-links a:hover { opacity: 1; }
+.nav-demo { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 9px 12px; border: 1.5px solid currentColor; transition: background .2s, color .2s; white-space: nowrap; }
+.nav-demo svg { width: 11px; height: 11px; }
+.nav-demo:hover { background: currentColor; }
+.nav-demo:hover span, .nav-demo:hover svg { color: var(--paper); }
+body[data-nav="night"] .nav-demo:hover span, body[data-nav="night"] .nav-demo:hover svg { color: var(--night); }
+.nav-demo .short { display: none; }
 .btn-sign {
   display: inline-flex; align-items: stretch; text-decoration: none; border: 0; cursor: pointer; padding: 0;
   font-family: var(--f-display); font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
@@ -119,14 +128,15 @@ body[data-nav="night"] .route-plane { color: var(--n-mag); }
 body[data-nav="sign"] .route-plane { color: var(--sign-ink); }
 .route-fix {
   position: absolute; top: 6px; transform: translateX(-50%);
-  font-family: var(--f-mono); font-size: 9px; letter-spacing: .1em; opacity: .55;
-  text-decoration: none; padding-top: 2px;
+  font-family: var(--f-mono); font-size: 0; letter-spacing: .1em; opacity: .55;
+  text-decoration: none; padding-top: 2px; white-space: nowrap;
 }
+.route-fix.cur, .route-fix:hover { font-size: 9px; opacity: 1; }
 .route-fix::before { content: ""; position: absolute; left: 50%; top: -9px; width: 6px; height: 6px; margin-left: -3px; transform: rotate(45deg); border: 1.5px solid currentColor; background: inherit; }
 .route-fix.on { opacity: 1; }
 
 /* ── Hero ────────────────────────────────────────────────────── */
-.hero { position: relative; padding-block: clamp(56px, 9vw, 120px) clamp(40px, 6vw, 72px); overflow: hidden; isolation: isolate; }
+.hero { position: relative; padding-block: clamp(36px, 5.5vw, 80px) clamp(40px, 6vw, 72px); overflow: hidden; isolation: isolate; }
 .hero-graticule {
   position: absolute; inset: 0; z-index: -3; pointer-events: none;
   background-image:
@@ -147,9 +157,10 @@ body[data-nav="sign"] .route-plane { color: var(--sign-ink); }
 
 .hero h1 {
   font-family: var(--f-display); font-weight: 900; text-transform: uppercase;
-  font-size: clamp(4.1rem, 15.2vw, 15.5rem); line-height: .8; letter-spacing: -.005em;
-  margin: 0 0 clamp(26px, 4vw, 44px);
+  font-size: clamp(3.4rem, 12vw, 12.4rem); line-height: .8; letter-spacing: -.005em;
+  margin: 0;
 }
+.h1-wrap { position: relative; margin: 0 0 clamp(26px, 4vw, 44px); }
 .hero h1 .ln { display: block; overflow: hidden; padding-bottom: .04em; }
 .hero h1 .ln > span { display: inline-block; animation: rise 1s cubic-bezier(.2,.8,.1,1) both; }
 .hero h1 .ln:nth-child(2) > span { animation-delay: .09s; }
@@ -249,9 +260,11 @@ body[data-nav="sign"] .route-plane { color: var(--sign-ink); }
   box-shadow: 0 30px 50px -30px color-mix(in srgb, var(--ink) 50%, transparent);
 }
 .plane svg { width: 100%; height: 100%; display: block; }
-.plane .tag { position: absolute; left: 8px; bottom: 6px; font-family: var(--f-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.plane .tag { opacity: 0; transition: opacity .3s; position: absolute; left: 8px; bottom: 6px; font-family: var(--f-mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
 .plane.top { background: color-mix(in srgb, var(--night) 92%, transparent); border-color: var(--night); }
-.plane.top .tag { color: var(--sign); }
+.plane.top .tag { color: var(--sign); opacity: 1; }
+.stack[data-on] .plane.top .tag { opacity: 0; }
+.stack[data-on="0"] .plane[data-l="0"] .tag, .stack[data-on="1"] .plane[data-l="1"] .tag, .stack[data-on="2"] .plane[data-l="2"] .tag, .stack[data-on="3"] .plane[data-l="3"] .tag { opacity: 1; }
 .stack[data-on="0"] .plane[data-l="0"],
 .stack[data-on="1"] .plane[data-l="1"],
 .stack[data-on="2"] .plane[data-l="2"],
@@ -261,19 +274,17 @@ body[data-nav="sign"] .route-plane { color: var(--sign-ink); }
 }
 
 /* ── Equation ────────────────────────────────────────────────── */
-.eq { background: var(--ink); color: var(--paper); padding-block: clamp(80px, 10vw, 150px); position: relative; overflow: hidden; }
+.eq { background: color-mix(in srgb, var(--ink) 94%, var(--paper)); color: color-mix(in srgb, var(--paper) 88%, var(--ink)); padding-block: clamp(80px, 10vw, 150px); position: relative; overflow: hidden; }
 .eq .eyebrow { color: var(--sign); }
 .formula {
   font-family: var(--f-display); font-weight: 900; text-transform: uppercase;
-  font-size: clamp(2.5rem, 9.4vw, 9rem); line-height: .9; margin: 0 0 clamp(40px, 5vw, 64px);
+  font-size: clamp(2.2rem, 7vw, 6.6rem); line-height: .92; margin: 0 0 clamp(40px, 5vw, 64px);
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .22em;
 }
 .formula .op { color: color-mix(in srgb, var(--paper) 45%, transparent); font-weight: 700; }
 .formula .sym { font-family: var(--f-serif); font-style: italic; font-weight: 500; text-transform: none; font-size: 1.04em; color: var(--sign); }
 .formula .t { position: relative; cursor: default; transition: color .3s; }
-.formula .t::after { content: ""; position: absolute; left: 0; right: 0; bottom: -.06em; height: .06em; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform .7s cubic-bezier(.7,0,.2,1); }
-.eq.in .formula .t::after { transform: scaleX(1); }
-.formula .t.e { color: var(--n-mag); }
+.formula .t.e { color: color-mix(in srgb, var(--n-mag) 85%, var(--paper)); }
 .terms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(20px, 3vw, 44px); border-top: 1px solid color-mix(in srgb, var(--paper) 25%, transparent); padding-top: 26px; }
 .term h3 { font-family: var(--f-display); font-weight: 800; font-size: 1.9rem; text-transform: uppercase; margin: 0 0 4px; line-height: 1; }
 .term .u { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; color: var(--sign); display: block; margin-bottom: 12px; }
@@ -323,7 +334,7 @@ body[data-nav="sign"] .route-plane { color: var(--sign-ink); }
 .metar b { color: var(--n-ink-3); font-weight: 500; }
 
 .c-ctrl { display: flex; flex-wrap: wrap; gap: 12px 22px; padding: 14px 22px; border-bottom: 1px solid var(--n-rule); align-items: center; }
-.seg { display: inline-flex; border: 1px solid var(--n-rule); background: var(--night); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--n-rule); background: var(--night); }
 .seg button {
   border: 0; background: transparent; cursor: pointer; padding: 9px 13px;
   font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--n-ink-2);
@@ -334,7 +345,7 @@ body[data-nav="sign"] .route-plane { color: var(--sign-ink); }
 .seg button[aria-pressed="true"] { background: var(--n-ink); color: var(--night); }
 .seg.mag button[aria-pressed="true"] { background: var(--n-mag); color: var(--night); }
 .ctl-lbl { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .14em; color: var(--n-ink-3); text-transform: uppercase; margin-right: 8px; }
-.ctl { display: flex; align-items: center; }
+.ctl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 0; min-width: 0; }
 .chk { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--n-ink-2); }
 .chk input { appearance: none; width: 16px; height: 16px; border: 1px solid var(--n-ink-3); margin: 0; display: grid; place-items: center; cursor: pointer; }
 .chk input:checked { background: var(--sign); border-color: var(--sign); }
@@ -444,7 +455,7 @@ body[data-nav="sign"] .route-plane { color: var(--sign-ink); }
 /* ── Waitlist ────────────────────────────────────────────────── */
 .wl { background: var(--sign); color: var(--sign-ink); padding-block: clamp(80px, 10vw, 140px); position: relative; overflow: hidden; }
 .wl::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .22;
   background: repeating-linear-gradient(-45deg, transparent 0 22px, color-mix(in srgb, var(--sign-ink) 6%, transparent) 22px 24px);
 }
 .wl-grid { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(30px, 6vw, 100px); align-items: start; }
@@ -501,6 +512,7 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
 }
 @media (max-width: 860px) {
   .nav-links { display: none; }
+  .nav-demo { margin-left: auto; }
   .hero-low, .alt-grid, .wl-grid { grid-template-columns: minmax(0, 1fr); }
   .hero-cta { justify-content: flex-start; }
   .tape { display: none; }
@@ -512,9 +524,13 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
   .ft { grid-template-columns: minmax(0, 1fr); }
   .route-fix { display: none; }
   .readout { display: none; }
+  .hero-route { display: none; }
 }
 @media (max-width: 520px) {
   .nav .btn-sign .b span { display: none; }
+  .nav-demo .full { display: none; }
+  .nav-demo .short { display: inline; }
+  .nav-in { gap: 12px; }
   .sp { grid-template-columns: minmax(0, 1fr) 42px 64px; }
   .sp-spark { display: none; }
   .f-row { grid-template-columns: minmax(0, 1fr); }
@@ -542,8 +558,9 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
     <nav class="nav-links" aria-label="Sections">
       <a href="#method">Method</a>
       <a href="#model">Model</a>
-      <a href="#demo">Demo</a>
+      <a href="#demo">Preview</a>
     </nav>
+    <a class="nav-demo demo-link" href="demo.html" target="_blank" rel="noopener" data-artifact-href="https://claude.ai/artifact/TKoEqH7kesWyba8yM6FPns"><span class="full">Demo console</span><span class="short">Demo</span><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 12 12 4M6 4h6v6" stroke="currentColor" stroke-width="2"/></svg></a>
     <a class="btn-sign" href="#waitlist">
       <span class="a">AB</span>
       <span class="b"><span>Join waitlist</span><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" stroke-width="2.2"/></svg></span>
@@ -561,36 +578,37 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
   <section class="hero" id="top" data-nav="paper">
     <div class="hero-graticule"></div>
     <canvas id="flock" aria-hidden="true"></canvas>
-    <svg class="hero-route" viewBox="0 0 1440 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <path id="heroPath" class="line" d="M -60 640 L 250 560 L 640 600 L 1010 380 L 1270 330 L 1520 180"/>
-      <g style="animation-delay:1.2s"><path class="fix" style="animation-delay:1.1s" d="M250 551 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:1.1s" x="264" y="548">TAKOF</text></g>
-      <path class="fix" style="animation-delay:1.5s" d="M640 591 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:1.5s" x="654" y="622">BIRDS</text>
-      <path class="fix" style="animation-delay:1.9s" d="M1010 371 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:1.9s" x="1024" y="368">SNAGV</text>
-      <path class="fix" style="animation-delay:2.2s" d="M1270 321 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:2.2s" x="1284" y="352">HOLDS</text>
-      <g class="ac">
-        <path d="M0 -9 L2.6 -2 L13 3 V6 L2.6 3.4 L2 10 L5.5 12.6 V14.4 L0 13 L-5.5 14.4 V12.6 L-2 10 L-2.6 3.4 L-13 6 V3 L-2.6 -2 Z" transform="rotate(90)"/>
-        <animateMotion id="acMotion" dur="16s" begin="2.4s" repeatCount="indefinite" rotate="auto" path="M -60 640 L 250 560 L 640 600 L 1010 380 L 1270 330 L 1520 180"/>
-      </g>
-    </svg>
 
     <div class="wrap">
-      <p class="eyebrow">Wildlife strike intelligence · Prototype</p>
-      <h1 aria-label="Birds don't file flight plans.">
-        <span class="ln"><span>Birds don’t</span></span>
-        <span class="ln"><span>file flight</span></span>
-        <span class="ln"><span>plans.</span></span>
-      </h1>
+      <p class="eyebrow">Wildlife-strike risk forecasting · Prototype</p>
+      <div class="h1-wrap">
+        <h1 aria-label="Birds don't file flight plans.">
+          <span class="ln"><span>Birds don’t</span></span>
+          <span class="ln"><span>file flight</span></span>
+          <span class="ln"><span>plans.</span></span>
+        </h1>
+        <svg class="hero-route" viewBox="0 0 1200 430" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <path class="line" d="M 470 428 L 760 330 L 975 205 L 1130 120 L 1260 50"/>
+          <path class="fix" style="animation-delay:1.1s" d="M760 321 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:1.1s" x="776" y="352">BIRDS</text>
+          <path class="fix" style="animation-delay:1.5s" d="M975 196 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:1.5s" x="991" y="226">SNAGV</text>
+          <path class="fix" style="animation-delay:1.9s" d="M1130 111 l9 15 h-18 z"/><text class="fixlbl" style="animation-delay:1.9s" x="1146" y="141">HOLDS</text>
+          <g class="ac">
+            <path d="M0 -9 L2.6 -2 L13 3 V6 L2.6 3.4 L2 10 L5.5 12.6 V14.4 L0 13 L-5.5 14.4 V12.6 L-2 10 L-2.6 3.4 L-13 6 V3 L-2.6 -2 Z" transform="rotate(90)"/>
+            <animateMotion id="acMotion" dur="11s" begin="2.4s" repeatCount="indefinite" rotate="auto" path="M 470 428 L 760 330 L 975 205 L 1130 120 L 1260 50"/>
+          </g>
+        </svg>
+      </div>
       <div class="hero-low">
-        <p class="hero-lede">AeroBird forecasts wildlife-strike risk around your airport <em>by ring, by week and by phase of flight</em>. It combines weather radar, survey-corrected bird records, strike history and your own airside logs.</p>
+        <p class="hero-lede">AeroBird forecasts wildlife-strike risk around your airport, <em>by ring, week and phase of flight</em>. It draws on weather-radar bird profiles, effort-corrected eBird records, reported strikes and your own airside logs.</p>
         <div class="hero-cta">
-          <a class="btn-ghost" href="#demo">Fly the demo <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1v11M2.5 7.5 7 12l4.5-4.5" stroke="currentColor" stroke-width="1.8"/></svg></a>
+          <a class="btn-ghost" href="#demo">See the demo <svg viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M7 1v11M2.5 7.5 7 12l4.5-4.5" stroke="currentColor" stroke-width="1.8"/></svg></a>
           <a class="btn-sign big" href="#waitlist"><span class="a">AB</span><span class="b">Join the waitlist <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" stroke-width="2.2"/></svg></span></a>
         </div>
       </div>
       <div class="hero-meta mono">
         <span><b>4</b> rings to 30 NM</span>
         <span><b>52</b> weeks of climatology</span>
-        <span><b>3</b> phases of flight</span>
+        <span><b>2</b> phases of flight</span>
         <span class="readout" id="readout">N44°34.27′ E026°05.11′</span>
       </div>
     </div>
@@ -608,10 +626,10 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
         <div class="tape-cap">ALT FT</div>
         <div class="tape-box" id="tapeBox">2818</div>
       </div>
-      <div class="big-alt" aria-label="2,818 feet above ground level">2,818<small>Feet above ground</small></div>
+      <div class="big-alt" aria-label="2,818 feet above ground level">2,818<small>Feet AGL</small></div>
       <div class="alt-copy">
-        <p>15 January 2009. US Airways 1549 climbs out of LaGuardia and flies into a flock of Canada geese. Both engines stop. Less than four minutes later the aircraft is on the Hudson.</p>
-        <p>Strikes cluster where aircraft are low and close to the field: take-off, climb, approach and landing. That band is where AeroBird looks hardest.</p>
+        <p>15 January 2009. US Airways 1549 departs LaGuardia and strikes a flock of Canada geese in the climb. The crew ditches in the Hudson.</p>
+        <p>Wildlife strikes are a low-altitude problem, concentrated in take-off, climb-out, approach and landing. That is the band AeroBird forecasts.</p>
         <p class="src mono">Altitude at impact per the NTSB accident report</p>
       </div>
     </div>
@@ -620,7 +638,7 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
   <!-- WHY CURRENT DATA FAILS -->
   <section class="fail" data-nav="paper" id="problem">
     <div class="wrap">
-      <p class="eyebrow">The problem with bird data today</p>
+      <p class="eyebrow">Why public bird data misleads</p>
       <h2 class="sec-h">Most bird maps count birdwatchers.</h2>
       <div class="fail-grid">
         <article class="fail-item">
@@ -635,8 +653,8 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
             <text x="65" y="138" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#46504A">10 VISITS · 40 GULLS</text>
             <text x="196" y="138" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#46504A">1 VISIT · 400 GULLS</text>
           </svg>
-          <h3>Counts, not rates</h3>
-          <p>A reservoir with ten visiting birders looks busier than a field with one, whatever the birds are doing. Without dividing by survey effort, you are mapping people.</p>
+          <h3>No effort correction</h3>
+          <p>A reservoir with ten birders logs more birds than a field with one, whatever the birds are doing. Unless counts are divided by survey effort, the map shows where people look.</p>
         </article>
         <article class="fail-item">
           <svg viewBox="0 0 260 150" aria-hidden="true">
@@ -649,8 +667,8 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
             <text class="blink" x="130" y="52" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#C0157A">NO RECORDS</text>
             <text x="130" y="146" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#46504A">AIRSIDE FENCE</text>
           </svg>
-          <h3>Airside is unsurveyed</h3>
-          <p>The ring that matters most sits behind a fence. Public records are thinnest exactly where aircraft are lowest.</p>
+          <h3>No records airside</h3>
+          <p>The inner ring sits behind the airport fence, so public records thin out toward the runway. That is where aircraft are lowest and the data is weakest.</p>
         </article>
         <article class="fail-item">
           <svg viewBox="0 0 260 150" aria-hidden="true">
@@ -664,8 +682,8 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
             <line x1="20" y1="92" x2="240" y2="92" stroke="#0B0E11" stroke-width="1.5"/>
             <text x="130" y="122" text-anchor="middle" font-family="Martian Mono, monospace" font-size="9" fill="#46504A">CHECKLISTS AFTER DARK: FEW</text>
           </svg>
-          <h3>Blind after dark</h3>
-          <p>Most songbird migration happens at night, hundreds of metres up. Daytime checklists never see it. Weather radar does.</p>
+          <h3>Nights go uncounted</h3>
+          <p>Much songbird migration happens at night and at altitude. Daytime checklists miss it. Weather radar records it.</p>
         </article>
       </div>
     </div>
@@ -681,22 +699,22 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
           <li class="layer-item" data-l="3">
             <span class="k">L4</span>
             <h3>Airside logs <small>Your wildlife team</small></h3>
-            <p>Daily patrol and dispersal records. The only data that properly covers the inner ring, and it stays yours.</p>
+            <p>Patrol and dispersal logs from your wildlife team. They are the only source inside the fence. The data stays yours.</p>
           </li>
           <li class="layer-item" data-l="2">
             <span class="k">L3</span>
-            <h3>Species &amp; season <small>Survey-corrected</small></h3>
-            <p>Citizen-science records divided by survey hours, with genuine zeros from complete checklists, smoothed into week-by-week climatology.</p>
+            <h3>Species &amp; season <small>Effort-corrected</small></h3>
+            <p>eBird records divided by survey effort. Complete checklists supply true zeros. The result is a week-by-week climatology.</p>
           </li>
           <li class="layer-item" data-l="1">
             <span class="k">L2</span>
             <h3>Weather radar <small>Altitude, day &amp; night</small></h3>
-            <p>European radar networks see migrating birds in 200 m height bins, around the clock. It fills in what checklists can’t see.</p>
+            <p>European weather-radar bird profiles give density by altitude, day and night. They cover the hours and heights checklists don’t.</p>
           </li>
           <li class="layer-item" data-l="0">
             <span class="k">L1</span>
-            <h3>Strike history <small>Ground truth</small></h3>
-            <p>Reported strikes with species, phase, altitude and damage. We fit severity to it, and we test every forecast against it.</p>
+            <h3>Strike history <small>Calibration and testing</small></h3>
+            <p>Reported strikes with species, phase of flight, height and damage. Severity is fitted to them. Forecasts are tested against them.</p>
           </li>
         </ol>
       </div>
@@ -744,27 +762,27 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
   <section class="eq" id="model" data-nav="night">
     <div class="wrap">
       <p class="eyebrow">The model</p>
-      <div class="formula" aria-label="Risk equals kappa times the sum over species of hazard times vulnerability times exposure">
+      <div class="formula" aria-label="Risk equals kappa times the sum over species of hazard times severity times exposure">
         <span>Risk</span><span class="op">=</span><span class="sym">κ</span><span class="sym">Σ</span>
         <span class="t">Hazard</span><span class="op">×</span><span class="t">Severity</span><span class="op">×</span><span class="t e">Exposure</span>
       </div>
       <div class="terms">
         <div class="term">
           <h3>Hazard</h3><span class="u">Birds per survey-hour, per species</span>
-          <p>How many birds are there, corrected for how hard people looked. Flocking species get weighted for the bad days, not just the average one.</p>
+          <p>Bird abundance per species, corrected for survey effort. Flocking species are scored on their bad days as well as the mean.</p>
         </div>
         <div class="term">
           <h3>Severity</h3><span class="u">Damage given a strike</span>
-          <p>Driven by body mass and fitted to recorded strike outcomes. A 3 kg goose and a 20 g swallow are not the same event.</p>
+          <p>Scales with body mass and is fitted to recorded strike outcomes. A 3 kg goose and a 20 g swallow are different events.</p>
         </div>
         <div class="term e">
           <h3>Exposure</h3><span class="u">Time spent low in each ring</span>
-          <p>A 3° approach is still below 3,000 ft at 10 NM. A climb-out clears that height inside 5 NM. Arrival and departure risk differ because the aircraft is somewhere different.</p>
+          <p>On a 3° glidepath an aircraft is at about 1,600 ft at 5 NM and 3,200 ft at 10 NM. Departures cross the same rings at different heights and speeds. That is why arrival and departure risk differ.</p>
         </div>
       </div>
       <div class="unitline">
         <b>Expected damaging strikes per 100,000 movements</b>
-        <span>Every number ships with an interval and a data grade. κ is fitted against held-out strike records, and the model has to beat a movements-only baseline before any score goes live.</span>
+        <span>Each score carries an uncertainty interval and a data grade. κ is calibrated on reported strike history. No score goes live until the model beats a movements-only baseline on held-out airports.</span>
       </div>
     </div>
   </section>
@@ -775,8 +793,8 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
     <div class="horizon"></div>
     <div class="migrants" id="migrants"></div>
     <div class="wrap">
-      <h2 id="duskH">Most migration happens <em>after dark.</em></h2>
-      <p>Checklists stop at sunset. Radar keeps counting. The demo below lets you switch between day and night and watch the risk move up the altitude profile.</p>
+      <h2 id="duskH">Many birds migrate <em>after dark.</em></h2>
+      <p>Observers go home at dusk. Radar keeps recording. Switch the demo to night to see the altitude profile and the score change.</p>
     </div>
   </section>
 
@@ -789,7 +807,7 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
           <h2>One airport.<br>Every ring, every week.</h2>
         </div>
         <div>
-          <p>Pick a ring, scrub through the year, switch phase of flight. Everything below is generated by the AeroBird model structure running on illustrative data.</p>
+          <p>Pick a ring, step through the 52 weeks, switch between arrival and departure. All figures are illustrative data for LROP. This shows the interface, not a forecast.</p>
           <p style="margin-top:14px;display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center"><span class="proto-tag">Prototype · illustrative data · not a forecast</span><a class="btn-sign demo-link" href="demo.html" target="_blank" rel="noopener" data-artifact-href="https://claude.ai/artifact/TKoEqH7kesWyba8yM6FPns"><span class="a">AB</span><span class="b">Open full demo <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 12 12 4M6 4h6v6" stroke="currentColor" stroke-width="2.2"/></svg></span></a></p>
         </div>
       </div>
@@ -894,7 +912,7 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
         </div>
       </div>
       <div class="demo-more">
-        <p>This is the quick view. The full console has eight screens: briefing, approach-path risk, a 52-week outlook, species register, radar altitude, airside log and the evidence behind every score.</p>
+        <p>This is the short version. The full demo adds a briefing, approach-path risk, a 52-week outlook, a species register, radar altitude, the airside log and the evidence behind each score.</p>
         <a class="btn-sign demo-link" href="demo.html" target="_blank" rel="noopener" data-artifact-href="https://claude.ai/artifact/TKoEqH7kesWyba8yM6FPns"><span class="a">AB</span><span class="b">Open the full console <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 12 12 4M6 4h6v6" stroke="currentColor" stroke-width="2.2"/></svg></span></a>
       </div>
     </div>
@@ -904,9 +922,9 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
   <section class="princ" data-nav="night">
     <div class="wrap">
       <p class="eyebrow" style="color:var(--n-ink-3)">House rules</p>
-      <div class="pr"><span class="k">Rule 1</span><h3 data-drift="-1">No data is <em>not</em> low risk.</h3><p>A ring without enough evidence shows no score at all. It never fades to green. Scrub to the first weeks of January in the demo to see it.</p></div>
-      <div class="pr"><span class="k">Rule 2</span><h3 data-drift="1">Every number has an interval.</h3><p>Each score carries its uncertainty range and a data grade. A thin estimate looks thin.</p></div>
-      <div class="pr"><span class="k">Rule 3</span><h3 data-drift="-1">Beat the baseline or <em>stay dark.</em></h3><p>The model has to predict strike rates better than aircraft movements alone, on airports it has never seen. If it can’t, it doesn’t ship.</p></div>
+      <div class="pr"><span class="k">Rule 1</span><h3 data-drift="-1">No data means <em>no score.</em></h3><p>A ring without enough evidence shows no score. It never defaults to low. Step to early January in the demo to see it.</p></div>
+      <div class="pr"><span class="k">Rule 2</span><h3 data-drift="1">Every number has an interval.</h3><p>Each score shows its uncertainty interval and a data grade. Thin evidence gets a wide interval and a lower grade.</p></div>
+      <div class="pr"><span class="k">Rule 3</span><h3 data-drift="-1">Beat the baseline or <em>stay dark.</em></h3><p>Before any score goes live, the model must beat a movements-only baseline on held-out airports. If it doesn’t, nothing is published.</p></div>
     </div>
   </section>
 
@@ -916,19 +934,19 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
       <div class="wl-copy">
         <div class="signpair" aria-hidden="true"><span class="loc">AB</span><span class="dir">Waitlist <svg viewBox="0 0 22 22" fill="none"><path d="M3 11h15M12 5l6 6-6 6" stroke="currentColor" stroke-width="3"/></svg></span></div>
         <h2>Hold short.</h2>
-        <p>We’re building the first release with a small group of airports and operators. Tell us where you fly and we’ll call you when your field is ready.</p>
+        <p>We are building the first release with a small number of airports and operators. Give us your airport and role, and we will email you when forecasts for it are available.</p>
         <ul>
           <li><span>01</span>Early access to forecasts for your airport</li>
-          <li><span>02</span>A say in what the first release covers</li>
-          <li><span>03</span>Your airside data stays yours</li>
+          <li><span>02</span>Input on what the first release covers</li>
+          <li><span>03</span>Airside logs you share remain yours</li>
         </ul>
       </div>
       <form class="wl-form" id="wlForm" novalidate>
         <div class="f"><label for="wlEmail">Work email</label><input id="wlEmail" name="email" type="email" autocomplete="email" placeholder="you@airline.aero" required></div>
-        <div class="f"><label for="wlName">Name</label><input id="wlName" name="name" type="text" autocomplete="name" placeholder="Captain, ops lead, wildlife officer…"></div>
+        <div class="f"><label for="wlName">Name</label><input id="wlName" name="name" type="text" autocomplete="name" placeholder="Full name"></div>
         <div class="f-row">
           <div class="f"><label for="wlOrg">Organisation</label><input id="wlOrg" name="org" type="text" autocomplete="organization" placeholder="Airline or airport"></div>
-          <div class="f"><label for="wlIcao">Airport ICAO</label><input id="wlIcao" name="icao" type="text" maxlength="4" placeholder="LROP" style="text-transform:uppercase;font-family:var(--f-mono)"></div>
+          <div class="f"><label for="wlIcao">Home airport (ICAO)</label><input id="wlIcao" name="icao" type="text" maxlength="4" placeholder="LROP" style="text-transform:uppercase;font-family:var(--f-mono)"></div>
         </div>
         <div class="f"><label for="wlRole">Role</label>
           <select id="wlRole" name="role">
@@ -940,7 +958,7 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
           </select>
         </div>
         <div class="f-err" id="wlErr" role="alert"></div>
-        <button class="submit" type="submit">Request clearance <svg viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3 11h15M12 5l6 6-6 6" stroke="currentColor" stroke-width="3"/></svg></button>
+        <button class="submit" type="submit">Join the waitlist <svg viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3 11h15M12 5l6 6-6 6" stroke="currentColor" stroke-width="3"/></svg></button>
         <p class="f-note">Preview build. This form doesn’t send anything yet.</p>
       </form>
     </div>
@@ -958,9 +976,9 @@ footer { background: var(--ink); color: var(--paper); padding-block: 44px 54px; 
       <b>AeroBird</b>
     </a>
     <div class="ft-cols">
-      <div><h4>Status</h4><p>Prototype. All demo figures are illustrative and generated for demonstration. Not for operational use.</p></div>
-      <div><h4>Planned sources</h4><p>Weather-radar bird profiles, survey-corrected citizen science, national strike databases and operator wildlife logs.</p></div>
-      <div><h4>© 2026 AeroBird</h4><p>Decision support for wildlife hazard management. Not a certified safety product.</p></div>
+      <div><h4>Status</h4><p>Prototype. Demo figures are illustrative. Not for operational use.</p></div>
+      <div><h4>Planned sources</h4><p>European weather-radar bird profiles, eBird records corrected for survey effort, reported strike history and operator wildlife logs.</p></div>
+      <div><h4>© 2026 AeroBird</h4><p>Decision support for wildlife hazard management. Not certified. Not a replacement for your SMS or airside procedures.</p></div>
     </div>
   </div>
 </footer>
@@ -991,10 +1009,10 @@ if (window.self !== window.top) $$(".demo-link[data-artifact-href]").forEach(a =
 /* ════════ Ticker ════════ */
 (() => {
   const items = [
-    "<b>SAMPLE FEED</b>", "LROP 011150Z 07006KT CAVOK 16/05 Q1021 NOSIG",
-    "W40 FCST 5–10 NM ARR HIGH", "STARLING ROOST FLIGHTS AT DUSK", "LAPWING FLOCKS ON AIRSIDE GRASS",
-    "RADAR: NOCTURNAL PASSAGE 1,500–4,000 FT", "CORMORANT MOVEMENTS SNAGOV ↔ COLENTINA AT DAWN",
-    "GULL COMMUTE RUDENI LANDFILL ↔ SNAGOV", "W44 FCST GREYLAG ARRIVALS BEGIN"
+    "<b>SAMPLE FEED · ILLUSTRATIVE</b>", "LROP 011150Z 07006KT CAVOK 16/05 Q1021 NOSIG",
+    "W40 CLIM 5–10 NM ARR HIGH · GRADE B", "STARLING ROOST FLIGHTS DUSK", "LAPWING FLOCKS ON AIRSIDE GRASS",
+    "RADAR NOCTURNAL PASSAGE 1500–4000 FT", "CORMORANT MOVEMENTS SNAGOV ↔ COLENTINA AT DAWN",
+    "GULL COMMUTE RUDENI LANDFILL ↔ SNAGOV", "W44 CLIM GREYLAG ARRIVALS BEGIN", "ILLUSTRATIVE DATA · NOT FOR OPERATIONAL USE"
   ];
   const html = items.map(t => `<span>${t}<i>▪</i></span>`).join("");
   $("#tickerTrack").innerHTML = html + html;
@@ -1142,6 +1160,8 @@ const tape = (() => {
       f.a.style.left = clamp(frac * 100, 3, 97) + "%";
       f.a.classList.toggle("on", p >= frac - 0.002);
     });
+    let ci = -1; fixEls.forEach((f, i) => { if (f.a.classList.contains("on")) ci = i; });
+    fixEls.forEach((f, i) => f.a.classList.toggle("cur", i === ci));
     const probe = 70;
     for (const s of navSecs) { const r = s.getBoundingClientRect(); if (r.top <= probe && r.bottom > probe) { document.body.dataset.nav = s.dataset.nav; break; } }
     const ar = alt.getBoundingClientRect();
@@ -1149,10 +1169,10 @@ const tape = (() => {
     if (!REDUCED) {
       const sr = stack.getBoundingClientRect();
       const sp = clamp((vh - sr.top) / (vh + sr.height), 0, 1);
-      stack.style.setProperty("--spread", (34 + sp * 64).toFixed(1) + "px");
+      stack.style.setProperty("--spread", (50 + sp * 46).toFixed(1) + "px");
       drifts.forEach(h => {
         const r = h.getBoundingClientRect(), q = clamp((vh - r.top) / (vh + r.height), 0, 1) - 0.5;
-        h.style.transform = `translateX(${(q * 90 * +h.dataset.drift).toFixed(1)}px)`;
+        h.style.transform = `translateX(${(q * (innerWidth < 760 ? 14 : 90) * +h.dataset.drift).toFixed(1)}px)`;
       });
     }
     const er = eq.getBoundingClientRect();
@@ -1665,9 +1685,9 @@ requestAnimationFrame(applyScale);
   const form = $("#wlForm"), err = $("#wlErr");
   const show = (email, icao) => {
     const lines = [
-      "AEROBIRD DATALINK", "─────────────────────────", `CLEARANCE ${new Date().toISOString().slice(11, 16).replace(":", "")}Z`,
-      `CLEARED TO JOIN WAITLIST`, `FIELD ${icao || "ANY"}`, `CONTACT ${email.toUpperCase()}`,
-      "WE WILL CALL WHEN YOUR FIELD IS READY", "READBACK NOT REQUIRED", "", "(PREVIEW BUILD · NOTHING WAS SENT)"
+      "AEROBIRD DATALINK", "─────────────────────────", `TIME ${new Date().toISOString().slice(11, 16).replace(":", "")}Z`,
+      `ADDED TO WAITLIST`, `FIELD ${icao || "ANY"}`, `CONTACT ${email.toUpperCase()}`,
+      "WE WILL EMAIL WHEN FORECASTS FOR YOUR FIELD ARE AVAILABLE", "", "(PREVIEW BUILD · NOTHING WAS SENT)"
     ].join("\n");
     form.innerHTML = `<div class="clear" id="clr"></div>`;
     const el = $("#clr");
